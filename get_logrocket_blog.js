@@ -421,6 +421,9 @@ function blog_index(){
     font-family: Segoe UI,Arial,sans-serif;
     min-width: 400px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    border-radius: 5px 5px 0 0;
+    overflow: hidden;
+
 }
 .styled-table caption {
     margin-top: 1em;
