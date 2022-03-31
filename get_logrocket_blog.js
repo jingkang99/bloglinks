@@ -34,34 +34,34 @@ const bloghash = prjroot + '/blogs.hash' ;
 const blgindex = prjroot + '/index.html' ;
 
 const config = {
-	headers: { 'User-Agent': ua_chrm },
+    headers: { 'User-Agent': ua_chrm },
 }
 
 function parse_blog_url($, section){
-	const posts = $(section);
+    const posts = $(section);
 
     let blogarr = [];
 
     for (let i = 0; i < posts.length; i++) {
 
-		let postID = $(posts[i]).attr("id");
+        let postID = $(posts[i]).attr("id");
 
-		let postTitleWrapper = $(posts[i]).find(".card-title")[0],
-			postTitle = $(postTitleWrapper).text();
+        let postTitleWrapper = $(posts[i]).find(".card-title")[0],
+            postTitle = $(postTitleWrapper).text();
         //let title = postTitle.replace(/[ |,|;|"|'|\?|<|>|\||\[|\]|\.|:|\(|\)|\{|\}|#|@|~|\!|\$\|\&]+/g, '_');
         let title = postTitle.replace(/[\W]+/g, '_');
 
-		let authorWrapper = $(posts[i]).find(".post-name a")[0],
-			author = $(authorWrapper).text();
+        let authorWrapper = $(posts[i]).find(".post-name a")[0],
+            author = $(authorWrapper).text();
 
-		let postLinkWrapper = $(posts[i]).find(".card-title > a")[0],
-			postLink = $(postLinkWrapper).attr("href");
+        let postLinkWrapper = $(posts[i]).find(".card-title > a")[0],
+            postLink = $(postLinkWrapper).attr("href");
 
-		let postDateWrapper = $(posts[i]).find(".post-date")[0],
-			postDate = $(postDateWrapper).text();
+        let postDateWrapper = $(posts[i]).find(".post-date")[0],
+            postDate = $(postDateWrapper).text();
 
-		let postDescWrapper = $(posts[i]).find(".card-text")[0],
-			postDesc = $(postDescWrapper).text().replace(/[\n|\r|"]+/g, '');
+        let postDescWrapper = $(posts[i]).find(".card-text")[0],
+            postDesc = $(postDescWrapper).text().replace(/[\n|\r|"]+/g, '');
         
         let blogFile = dateFormat (new Date(postDate), "%Y-%m-%d", true)
         blogFile += '~' + postID + '~' + title;
@@ -77,7 +77,7 @@ function parse_blog_url($, section){
 
         const item_json = blog_attr(postID, postTitle, author, postLink, postDate, blogFile, postDesc);
         blogarr.push(item_json);        
-	}
+    }
     return blogarr;
 }
 
@@ -100,10 +100,10 @@ async function find_blog_links(purl){
         html = resp.data;
     }
 
-	var $ = cheerio.load(html)
+    var $ = cheerio.load(html)
 
-	// parse regular posts
-	var regular_posts = parse_blog_url($, REGular);
+    // parse regular posts
+    var regular_posts = parse_blog_url($, REGular);
 
     if (firstp){    // parse featured posts in first page        
         var feature_posts = parse_blog_url($, FEAture);
@@ -132,7 +132,7 @@ async function save_blog_content(url, file){
     let stime = process.hrtime();
 
     let resp = await axios.get(url, config);
-	var $ = cheerio.load(resp.data)
+    var $ = cheerio.load(resp.data)
 
     //remove product/share/links to keep layout clean
     $(".share").remove();
@@ -221,11 +221,11 @@ async function get_all_blog_url2array(urlp, firstpage_only=false) {
     !fs.existsSync(blgroot) && fs.mkdirSync(blgroot);
 
     let resp = await axios.get(urlp, config);
-	var $ = cheerio.load(resp.data)
+    var $ = cheerio.load(resp.data)
 
     //get max page count
-	const lastpage = $(".bottompagination .next > a").attr("href").match(/\d+/)[0];
-	if(isDebug) console.log("\nlast page num:" + lastpage + "\n");
+    const lastpage = $(".bottompagination .next > a").attr("href").match(/\d+/)[0];
+    if(isDebug) console.log("\nlast page num:" + lastpage + "\n");
 
     // load existing blog urls
     var blogs = [];
@@ -408,6 +408,7 @@ node --inspect get_logrocket_blog.js --check-new`);
 
 // --- index template ---
 // https://dev.to/dcodeyt/creating-beautiful-html-tables-with-css-428l
+// https://css-tricks.com/almanac/properties/b/border-radius/
 // https://codepen.io/faaezahmd/pen/dJeRex
 
 function blog_index(){
@@ -423,7 +424,6 @@ function blog_index(){
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
     border-radius: 5px 5px 0 0;
     overflow: hidden;
-
 }
 .styled-table caption {
     margin-top: 1em;
@@ -480,11 +480,11 @@ a:hover { color: Orange ; }
 <caption>${bserver}</caption>
 <thead>
 <tr >
-<th >seq</th>
+<th style="border-radius: 5px 0 0 0;">seq</th>
 <th >Date</th>
 <th >Title</th>
 <th >Tags</th>
-<th >org</th>
+<th style="border-radius: 0 5px 0 0;">org</th>
 </tr></thead>
 <tbody>
 `;
@@ -514,7 +514,7 @@ a:hover { color: Orange ; }
 
 function blog_attr(...attr) {
     if(attr[6] == undefined ) attr[6]=''
-	return `{
+    return `{
     "idblg" : "${attr[0]}",
     "title" : "${attr[1]}",
     "authr" : "${attr[2]}",
