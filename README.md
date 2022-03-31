@@ -8,6 +8,8 @@ Keep your own copy of blogs, to extract IOC, analyze the threats and follow hot 
 - index.html generated with each blog link
 - tested on Windows and Linux
 
+![image](https://user-images.githubusercontent.com/10793075/160975712-1b750720-2b38-4d76-bf02-eca5d0a69273.png)
+
 ### Installation
 
 ```
