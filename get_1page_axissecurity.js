@@ -16,11 +16,14 @@ const argv = process.execArgv.join();
 const isDebug = argv.includes('inspect');
 const isVerbs = argv.includes('verbose');
 
-const urlroot = 'https://blog.logrocket.com/';
-const REGular = ".recent-posts .grid-item";
-const FEAture = ".featured-posts .card";
+const urlroot = 'https://www.axissecurity.com/blog/';
+const REGular = ".articles";
+const FEAture = ".NONE .NONE";
 
 const ua_chrm = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36';
+
+var ONEPAGE = false;
+var CHCKNEW = false;
 
 if (! process.env.ARCROOT) {
     console.log('warning: export ARCROOT first, use ../arcroot as default');
@@ -45,30 +48,27 @@ const config = {
 }
 
 function parse_blog_url($, section){
-    const posts = $(section);
-
+    let blgid = $('.articles').html().match(/post-\d+/g); //all post id
+   
+    const posts = $('.articles .article');
     let blogarr = [];
-
     for (let i = 0; i < posts.length; i++) {
+        let postID = String(blgid[i]);
 
-        let postID = $(posts[i]).attr("id");
-
-        let postTitleWrapper = $(posts[i]).find(".card-title")[0],
-            postTitle = $(postTitleWrapper).text();
-        //let title = postTitle.replace(/[ |,|;|"|'|\?|<|>|\||\[|\]|\.|:|\(|\)|\{|\}|#|@|~|\!|\$\|\&]+/g, '_');
+        let postTitleWrapper = $(posts[i]).find(".article__title")[0],
+            postTitle = $(postTitleWrapper).text().match(/\W*(\w.+\w)\W*/)[1];
         let title = postTitle.replace(/[\W]+/g, '_');
 
-        let authorWrapper = $(posts[i]).find(".post-name a")[0],
-            author = $(authorWrapper).text();
-
-        let postLinkWrapper = $(posts[i]).find(".card-title > a")[0],
+        let postLinkWrapper = $(posts[i]).find("a")[0],
             postLink = $(postLinkWrapper).attr("href");
 
-        let postDateWrapper = $(posts[i]).find(".post-date")[0],
-            postDate = $(postDateWrapper).text();
+        let author = 'MK', postDate = 'January 5, 2000', postDesc='';
 
-        let postDescWrapper = $(posts[i]).find(".card-text")[0],
-            postDesc = $(postDescWrapper).text().replace(/[\n|\r|"]+/g, '');
+        if($(posts[i]).html().match(/article__meta/)){
+            let article_meta = $(posts[i]).find(".article__meta p");
+            author   = $(article_meta[0]).text().replace('By ','');
+            postDate = $(article_meta[1]).text();
+        }
         
         let blogFile = dateFormat (new Date(postDate), "%Y-%m-%d", true);
         blogFile += '~' + postID + '~' + title;
@@ -92,19 +92,30 @@ async function find_blog_links(purl){
     let num = purl.match(/http[s]:\/\/.+\/(\d+)\//);
     let page = pagroot + '/p' + int3(num[1]) + '.html'; 
 
-    let firstpage_only = false;
+    let firstp = false;
     if (purl.search(/\/1\//) > 0 ){
         purl = urlroot;  // blog root page with featureed post
-        firstpage_only = true;
+        firstp = true;
     }
 
     var html;
-    if (fs.existsSync(page) && ! firstpage_only){
-        html = fs.readFileSync(page).toString();
-    }else{
-        let resp = await axios.get(purl);
-        await save_to_file(page, resp.data);
-        html = resp.data;
+    if( ONEPAGE ) {
+        if(CHCKNEW) {
+            let resp = await axios.get(purl);
+            await save_to_file(page, resp.data);
+            html = resp.data;            
+        }
+        else{
+            html = fs.readFileSync(onepage).toString();
+        }
+    }else{       
+        if (fs.existsSync(page) && ! firstp ){   // always read the 1st page
+            html = fs.readFileSync(page).toString();
+        }else{
+            let resp = await axios.get(purl);
+            await save_to_file(page, resp.data);
+            html = resp.data;
+        }
     }
 
     var $ = cheerio.load(html)
@@ -112,8 +123,10 @@ async function find_blog_links(purl){
     // parse regular posts
     var regular_posts = parse_blog_url($, REGular);
 
-    if (firstpage_only){    // parse featured posts in first page        
-        var feature_posts = parse_blog_url($, FEAture);
+    if (firstp){    // parse featured posts in first page        
+        var feature_posts=[];
+        if( ! ONEPAGE ) feature_posts = parse_blog_url($, FEAture);
+
         regular_posts = [...feature_posts, ...regular_posts];
     }
 
@@ -145,11 +158,18 @@ async function save_blog_content(url, file){
     $(".hidden-lg-up").remove();
     $(".prevnextlinks").remove();
 
-    let title = $("title").text().replace('- LogRocket Blog', '-JK CTI');
+    $(".sidebar").remove();
+    $(".blogNavbar").remove();
+    $(".article__footer").remove();
+
+    let title = $("title").text().replace('- Axis Security', '-JK CTI');
     let btags = $('.aretags').find('li').text().split('#').slice(1,);
 
-    let bodym = $(".site-content .container").html();
-    bodym = bodym.replaceAll('srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"', ' ');    
+    let bodym = $(".article__entry").html(); // locate blog main body
+
+    if(bodym == null) bodym = $(".blog-template-grid-expand").html();
+    
+    bodym = bodym.replaceAll('srcset="data:image/gif;base64.*"', ' ');    
 
     $ = cheerio.load(bodym); // only blog main part
 
@@ -160,9 +180,9 @@ async function save_blog_content(url, file){
 <meta name="JK" content="SZ Threat Intel" />
 <title>${title}</title>
 
-<link rel='stylesheet' id='bootstrap4-css'  href='https://blog.logrocket.com/wp-content/themes/mediumish/assets/css/bootstrap.min.css' type='text/css' media='all' />
-<link rel='stylesheet' id='mediumish-style-css'  href='https://blog.logrocket.com/wp-content/themes/mediumish/style.css?ver=5.9.2' type='text/css' media='all' />
-<link rel="stylesheet" type="text/css" id="wp-custom-css" href="https://blog.logrocket.com/?custom-css=f9bf9daf84" />
+<link rel='stylesheet' id='bootstrap4-css'  href='../data/bootstrap.min.css' type='text/css' media='all' />
+<link rel='stylesheet' id='mediumish-style-css'  href='../data/style.css' type='text/css' media='all' />
+<link rel="stylesheet" type="text/css" id="wp-custom-css" href="../data/custom-css" />
 
 </head>
 <body class="post-template-default single single-post single-format-standard">
@@ -170,18 +190,24 @@ async function save_blog_content(url, file){
 `;
     const bhead_e ='</div></body></html>';
 
-    let gg = $('img')   // parse all images src link and save to local
+    var gg = $('.wp-block-image')   // parse all images link and save to local
+
+    //let menu = $('.wp-block-image').each(function(i, element) {
+    //  let thing = $(element).find('img').attr('data-lazy-src');
+    //});
+
+    //console.log( $('.wp-block-image'));
     for(let i=0; i < gg.length; i++ ){
-        let imgurl = gg[i].attribs.src;
-        // console.log(imgurl);
-        
+        let imgurl = $(gg[i]).find('img').attr('data-lazy-src'); // get real image url
+        let srcurl = $(gg[i]).find('img').attr('src');           // whatever in src
+
         if(! imgurl.match(/\w+/)) continue;
 
         let fileimage = imgurl.split('/').slice(-1)[0].split('?')[0];
         let filelocal = datroot + '/' + fileimage;  // save to
 
-        gg[i].attribs.src = '../data/' + fileimage; // use local saved images in html
-        bodym = bodym.replaceAll(imgurl, '../data/' + fileimage);
+        // use local downloaded images
+        bodym = bodym.replaceAll(srcurl, '../data/' + fileimage);
 
         if (fs.existsSync(filelocal)) continue;     // skip if already downloaded
 
@@ -224,20 +250,31 @@ async function get_all_blog_url2array(urlp, firstpage_only=false) {
     !fs.existsSync(datroot) && fs.mkdirSync(datroot);
     !fs.existsSync(blgroot) && fs.mkdirSync(blgroot);
 
-    let resp = await axios.get(urlp, config);
-    var $ = cheerio.load(resp.data)
+    var loadhtml;
+    if ( fs.existsSync(onepage) ){  // onepage is saved manually
+        ONEPAGE = true;
+        loadhtml = fs.readFileSync(onepage).toString();
+    }else{
+        let resp = await axios.get(urlp, config);
+        loadhtml = resp.data;
+    }
 
-    //get max page count
-    const lastpage = $(".bottompagination .next > a").attr("href").match(/\d+/)[0];
-    if(isDebug) console.log("\nlast page num:" + lastpage + "\n");
+    var $ = cheerio.load(loadhtml);
 
-    // load existing blog urls
+    var lastpage = 1;
+    if( ! ONEPAGE ) {  //get max page count
+        lastpage = $(".bottompagination .next > a").attr("href").match(/\d+/)[0];
+        if(isDebug) console.log("\nlast page num:" + lastpage + "\n");
+    }
+
+    // load existing blog urls when checking new
     var blogs = [];
     if (fs.existsSync(blogarry) && firstpage_only){
+        console.log('read existing blog array');
         let buffe = fs.readFileSync(blogarry).toString();
         blogs = JSON.parse(buffe);
     }
-    
+
     var bhmap;
     if (fs.existsSync(bloghash)){
         let buffe = fs.readFileSync(bloghash).toString();
@@ -249,6 +286,7 @@ async function get_all_blog_url2array(urlp, firstpage_only=false) {
     // find all posts in each blog page
     for(let i = 1; i <= lastpage; i++) {
         let page = urlroot +'page/' + i + '/';
+        if( ONEPAGE ) page = urlroot + '/1/';
 
         let pburls = await find_blog_links(page);
 
@@ -371,6 +409,7 @@ switch (arg[0]) {
         break;
     case '--check-new':
         console.log('== check-new ==');
+        CHCKNEW = true;
         get_all_blog_url2array(urlroot, true);
         break;
     case '--save-blog':
