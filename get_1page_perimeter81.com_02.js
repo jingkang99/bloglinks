@@ -391,6 +391,7 @@ async function process_blog_cont2file( stopnum = 10000 ){
             let rr;
             if(rr = bltgs.match(/(.*)(&nbsp;)/)) bltgs = rr[1];
 
+            obj.title = obj.title.slice(0, 100);
             // create index table rows
             tablerow += `
 <tr >
