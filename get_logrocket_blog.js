@@ -173,7 +173,6 @@ async function save_blog_content(url, file){
     let gg = $('img')   // parse all images src link and save to local
     for(let i=0; i < gg.length; i++ ){
         let imgurl = gg[i].attribs.src;
-        // console.log(imgurl);
         
         if(! imgurl.match(/\w+/)) continue;
 
@@ -185,10 +184,11 @@ async function save_blog_content(url, file){
 
         if (fs.existsSync(filelocal)) continue;     // skip if already downloaded
 
+        const encodedurl = encodeURI(imgurl);       // handle special char
         try {
             const response = await axios({
                 method: 'GET',
-                url: imgurl,
+                url: encodedurl,
                 responseType: 'stream',
             });
             
@@ -197,7 +197,9 @@ async function save_blog_content(url, file){
                 process.stdout.write(`.`);
             });
         } catch (err) { 
-                throw new Error(err);
+            console.log("  unescaped char: %s", imgurl);
+            execcmd('wget', [imgurl, '-q', '-O', filelocal], {stdio:'inherit'});
+            continue;
         }
     }
     console.log("");
