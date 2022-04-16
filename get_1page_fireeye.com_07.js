@@ -1,5 +1,3 @@
-// export ARCROOT='../arcroot'
-
 'use strict';
 
 const fs = require('fs');
@@ -84,9 +82,6 @@ function parse_blog_url($, section){
     const posts = $(section);
     let blogarr = [];
 
-    //console.log($( "li[itemprop='datePublished']").text() );
-    //console.log(posts.length); 
-
     for (let i = 0; i < posts.length; i++) {
         let postTitleWrapper = $(posts[i]).find(".c11-text h4")[0],
             postTitle = $(postTitleWrapper).text();
@@ -116,15 +111,6 @@ function parse_blog_url($, section){
 
         let blogFile = dateFormat (new Date(postDate), "%Y-%m-%d", true);
         blogFile += '~' + postID + '~' + title;
-
-        if(isDebug && isVerbs){
-            console.log(`${postID.brightGreen}`);
-            console.log(`${postTitle.yellow}`);
-            console.log(`${postDate.cyan}`);
-            console.log(`${author.red}`);
-            console.log(`${postLink.gray}`);
-            console.log("----"); 
-        }
 
         const item_json = blog_attr(postID, postTitle, author, postLink, postDate, blogFile, postDesc);
         //console.log(item_json); process.exit(1);
