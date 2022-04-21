@@ -1,28 +1,40 @@
-// export ARCROOT='../arcroot'
-
 'use strict';
 
-const fs = require('fs');
-const util = require('util');
-const path = require('path');
-const axios = require("axios");
-const colors = require("colors");
-const crypto = require('crypto');
+const fs      = require('fs');
+const util    = require('util');
+const path    = require('path');
+const axios   = require("axios");
+const colors  = require("colors");
+const crypto  = require('crypto');
 const hashmap = require('hashmap');
 const cheerio = require("cheerio");
 const execcmd = require('child_process').execFileSync;
 
-const argv = process.execArgv.join();
+const argv = process.argv.join();
 const isDebug = argv.includes('inspect');
 const isVerbs = argv.includes('verbose');
 
-const urlroot = 'https://www.attivonetworks.com/blogs/';
-const TITLEST = "- MMM";
-const REGULAR = ".uabb-blog-post-content";
-const FEATURE = ".MMM";
-const BODYBLG = ".fl-rich-text";
-const TITLEBL = ".fl-heading-text";
-const DATEBLG = ".MMM";
+// -------------------------- UPDATE manually --------------------------
+
+var urlroot = 'https://instasafe.com/blog/';
+var prdroot = '';
+var opnroot = '';
+var sourceb = '';    // category - cti prd opn
+
+const TITLEST = "| InstaSafe Blog";
+const REGULAR = ".post-card-content";
+const FEATURE = "MMM";
+const PAGESTY = '';
+
+var IDXTITL = ".post-card-title";
+var IDXDATE = ".post-card-byline-date time";
+var IDXAUTH = ".MMM";
+
+var BDYBLOG = ".article.post ";
+var BDYDATE = ".MMM";
+var DBYAUTH = '.MMM';
+var BDYTAGS = ".article-tag";
+var BDYTITL = ".MMM";
 
 const ua_chrm = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36';
 
@@ -35,67 +47,90 @@ if (! process.env.ARCROOT) {
     process.env.ARCROOT = '../arcroot';
 }
 
-let www = urlroot.match(/http[s]:\/\/(.+?)\//); 
+let www = urlroot.match(/http[s]:\/\/(.+?)\//);
 let bserver = www[1].replace("www\.", '');
-const prjroot = process.env.ARCROOT + '/' + bserver;
-const pagroot = process.env.ARCROOT + '/' + bserver + '/page';
-const datroot = process.env.ARCROOT + '/' + bserver + '/data';
-const blgroot = process.env.ARCROOT + '/' + bserver + '/blog';
-const onepage = process.env.ARCROOT + '/' + bserver + '/' + bserver + '.html';
+let rootfld = bserver;
+
+if( argv.includes('--prd') ){  // a corp has more blog types
+    urlroot = prdroot;
+    sourceb = 'prd';
+}
+if( argv.includes('--opn') ){
+    urlroot = opnroot;
+    sourceb = 'opn';
+}
+
+if(sourceb.match(/\w+/)) rootfld = bserver + '-' + sourceb ;
+
+console.log("  url root " + www[0].cyan);  // info
+console.log("  domain   " + www[1].cyan);
+console.log("  company  " + bserver.cyan);
+console.log("  data dir " + rootfld.cyan);
+if(sourceb.match(/\w+/)) console.log("  category " + sourceb.cyan);
+
+const prjroot = process.env.ARCROOT + '/' + rootfld;
+const pagroot = process.env.ARCROOT + '/' + rootfld + '/page';
+const datroot = process.env.ARCROOT + '/' + rootfld + '/data';
+const blgroot = process.env.ARCROOT + '/' + rootfld + '/blog';
+const onepage = process.env.ARCROOT + '/' + rootfld + '/' + bserver + '.html';
 
 const blogarry = prjroot + '/blogs.array';
 const bloghash = prjroot + '/blogs.hash' ;
 const blgindex = prjroot + '/index.html' ;
+console.log("  one page " + onepage.cyan);
 
 const config = {
-    headers: { 'User-Agent': ua_chrm }, 
+    headers: { 'User-Agent': ua_chrm, 'accept': '*/*', 'referer': 'https://colortokens.com/blog/' }
 }
 
 function parse_blog_url($, section){
     const posts = $(section);
     let blogarr = [];
 
-    //console.log($( "li[itemprop='datePublished']").text() );
-    //console.log(posts.length); 
+    // A ref exclued in section, so get the array first
+    /* let temp = $(".cols.cols-3").find("a"); 
+    let aref = [];
+    for(let i=0; i < temp.length; i++){
+        let ll = $(temp[i]).attr("href");
+        if(! ll.match('https') ) ll = www[0] + postLink;
+        aref.push(ll);
+    }*/
+    //console.log(posts.length);
 
     for (let i = 0; i < posts.length; i++) {
-        let postTitleWrapper = $(posts[i]).find(".uabb-post-heading")[0],
+        let postTitleWrapper = $(posts[i]).find(IDXTITL)[0],
             postTitle = $(postTitleWrapper).text();
-            postTitle = postTitle.replace(/\n/g, '');
+            postTitle = postTitle.replace(/\n/g, '').replace(/"/g, '\\"');
             postTitle = postTitle.trim();
 
         let title = postTitle.replace(/ /g, '_');
         title = title.replace(/[\W]+/g, '');
-        title = title.replace(/_+/g, '_');
-        
+        title = title.replace(/_+/g, '_'); 
+        title = title.replace(/…/g, ''); 
+
         if(title.length < 10) continue;
 
-        let postLinkWrapper = $(posts[i]).find("a")[0],
+        let postLinkWrapper = $(posts[i]).find("> a")[0],
             postLink = $(postLinkWrapper).attr("href");
         if(! postLink.match('https') ) postLink = www[0] + postLink;
 
         let author = bserver, postDate = 'January 5, 2000', postDesc = title;
 
-        let authorWrapper = $(posts[i]).find(".MMM")[0];
+        let authorWrapper = $(posts[i]).find(IDXAUTH)[0];
         if(authorWrapper != null ) 
             author = $(authorWrapper).text().replace(/By +/, '').replace(' |', '');
         author = author.trim();
 
-        postDate = find_post_date($, posts[i], '.uabb-meta-date');
-    
+        postDate = find_post_date($, posts[i], IDXDATE);
+        if(urlroot.match('infusedinnovations')){
+            let dd = $(posts[i]).find("meta")[1];
+            postDate = $(dd).attr("content");
+        }
+
         let postID = "post-" + crypto.createHash('md5').update(author+title, 'utf8').digest('hex').slice(0,6);
 
         let blogFile = dateFormat (new Date(postDate), "%Y-%m-%d", true);
         blogFile += '~' + postID + '~' + title;
-
-        if(isDebug && isVerbs){
-            console.log(`${postID.brightGreen}`);
-            console.log(`${postTitle.yellow}`);
-            console.log(`${postDate.cyan}`);
-            console.log(`${author.red}`);
-            console.log(`${postLink.gray}`);
-            console.log("----"); 
-        }
 
         const item_json = blog_attr(postID, postTitle, author, postLink, postDate, blogFile, postDesc);
         //console.log(item_json); process.exit(1);
@@ -105,19 +140,41 @@ function parse_blog_url($, section){
 }
 
 async function find_blog_links(purl){
-    let num = purl.match(/http[s]:\/\/.+\/(\d+)\//);
-    let page = pagroot + '/p' + int3(num[1]) + '.html'; 
+    let pnum, num;
+
+    if(purl.match(/viewsreference/) ){
+        num = purl.match(/http[s]:\/\/.+\page=(\d+)/);
+        pnum = num[1] + 1;
+    }
+    else if(purl.match('infusedinnovations') || purl.match('netmotionsoftware' )) {
+        num  = purl.match(/http[s]:\/\/.+\/(\d+)/);
+        pnum = num[1];
+    }    
+    else{
+        num = purl.match(/http[s]:\/\/.+\/(\d+)\//);
+
+        if( num == null){
+            num  = purl.match(/http[s]:\/\/.+\/p(\d+)/);
+            pnum = num[1];
+        }else
+            pnum = num[1];
+    }
+
+    let page = pagroot + '/p' + int3(pnum) + '.html'; 
 
     let firstp = false;
-    if (purl.search(/\/1\//) > 0 ){
+    if (purl.search(/\/1$/) > 0 ){
         purl = urlroot;  // blog root page with FEATUREed post
         firstp = true;
     }
 
+    //console.log(ONEPAGE, CHCKNEW, firstp, purl);
+
     var html;
     if( ONEPAGE ) {
         if(CHCKNEW) {
-            let resp = await axios.get(purl);
+            let resp = await axios_get(purl);
+
             await save_to_file(page, resp.data);
             html = resp.data;            
         }
@@ -129,13 +186,17 @@ async function find_blog_links(purl){
         if (fs.existsSync(page) && ! firstp ){   // always read the 1st page
             html = fs.readFileSync(page).toString();
         }else{
-            let resp = await axios.get(purl);
+            let resp = await axios_get(purl);
+            //console.log('  get page: ' + purl + ' ' + resp.data.length);
             await save_to_file(page, resp.data);
             html = resp.data;
         }
     }
 
     var $ = cheerio.load(html)
+    $(".nm-section-wrapper--dark.featured").remove();
+    $(".wp-block-column").remove();
+    $(".article-byline").remove();
 
     // parse REGULAR posts
     var REGULAR_posts = parse_blog_url($, REGULAR);
@@ -146,7 +207,8 @@ async function find_blog_links(purl){
         REGULAR_posts = [...FEATURE_posts, ...REGULAR_posts];
     }
 
-    //console.log("blog found: %d", REGULAR_posts.length);
+    console.log("blog found: %d\t%s", REGULAR_posts.length, purl);
+    //console.log(REGULAR_posts); process.exit(0);
     return REGULAR_posts;
 }
 
@@ -158,45 +220,70 @@ async function save_to_file(file, content){
             await fs.writeFile(file, content, function (err) {if (err) throw err;});
         }
     } catch(err) {
-        console.error(err)
+        console.log("cannot save " + file);
+        //console.error(err)
     }
 }
 
 async function save_blog_content(url, file){   
     let stime = process.hrtime();
 
-    let resp = await axios.get(url, config);
+    let resp = await axios_get(url);
     var $ = cheerio.load(resp.data)
 
+    let MANDI = false;
+    let title = $("title").text(), titorg = title;
+    if(title.includes(' | Mandiant')) MANDI= true;
+    title = title.replace(TITLEST, '- JK CTI -');
+
+    let urihp = www[1],  bodyt = BDYBLOG, 
+        datas = IDXDATE, dataa = BDYDATE, tagaa = BDYTAGS;
+    if(MANDI){  // blog has 2 domains and style
+        urihp = 'mandiant.com';
+        bodyt = ".resource";
+        datas = '.minutes';
+        dataa = ".time";
+        tagaa = ".topic-hero div";
+    }
+
     // parse tags
-    let btags = $('.info-list-item-dynamic1').text().replace('Tags:', '').trim();
-    
+    let tagbb = $(tagaa), tagtt = [];
+    for (let i = 0; i < tagbb.length && i < 3; i++) {
+        tagtt.push( $(tagbb[i]).text().trim() );
+    }
+    let btags = tagtt.join(',');
+
     btags = btags.replace(' < Back', '').replace('< ', '').replace(/ *Back */ig, '');
     if(btags.endsWith(',')) btags = btags.slice(0, -1); //remove last ,
-    if(btags.length > 60  ) btags = '';
 
     // parse date and change file name, when post date not on index page
-    let bdate = find_post_date($, DATEBLG);
+    let bdate = find_post_date($, datas, dataa);
+        
     if(file.match('2000-01-20') && bdate != null){
-        console.log("  get date in blog: %s", bdate);
         file = file.replace('2000-01-20', bdate);
     }
+
+    let uniq = file.split('~')[1];
+    !fs.existsSync(datroot+'/'+uniq) && fs.mkdirSync(datroot+'/'+uniq);
 
     //remove unwanted div/class to keep layout clean   
     remove_html_sections($);
 
-    let title = $("title").text().replace(TITLEST, '-JK CTI');
-
-    //let bodyo = $(BODYBLG); // cyolo no clear way to identify main blog, returns 2
-    let bodym = $(BODYBLG).html()   // locate blog main body
+    let bodym = $(bodyt).html() // locate blog main body
+    if(bodym == null) bodym = $('.simple').html();    // appgate
+    if(bodym == null) bodym = $('.fl-row.fl-row-full-width.fl-row-bg-none').html(); // infusedinnovations
+    
+    let video = $('#video-70-30').html(); // video of appgate 
+    video == null ? video = '' : process.stdout.write(`v`); 
 
     // if title/topic not inclued in bodym
-    let topic = $(TITLEBL).text();
-    if(urlroot.match('attivonetworks')) bodym = `<br><h1> ${title} </h1><br>\n` + bodym;
-
-    if(bodym == null) bodym = $(".blog-template-grid-expand").html(); // twingate
+    let topic = $(BDYTITL).text().trim();
+    if(urlroot.match('appgate') ||
+       urlroot.match('netmotionsoftware') ) 
+       bodym = `<br><h1> ${topic} </h1><br>\n` + bodym;
 
     // no late load
+    bodym = bodym.replaceAll(/Continue reading/g, '');
     bodym = bodym.replaceAll(/srcset=".*?"/g, ' ');
     bodym = bodym.replaceAll(/background-image:url\(.*?\);/g, ' ');
 
@@ -223,10 +310,11 @@ async function save_blog_content(url, file){
 
         let imgurl = imgsrc;
         if( imgurl.match(/data:image/) ) imgurl = datsrc;
+        if( imgurl == null) continue;
 
         // skip if already downloaded
         let imagename = imgurl.split('/').slice(-1)[0].split('?')[0];
-        let filelocal = datroot + '/' + imagename;  // save to
+        let filelocal = datroot + '/' + uniq + '/' + imagename; //save
 
         // handle special * in file name
         if(imagename.match(/[\*]/)) {
@@ -234,14 +322,21 @@ async function save_blog_content(url, file){
             imagename = imagename.replace('*', 'A');
             process.stdout.write(`*`);
         }
+        if(imagename.match(/%20/)) {
+            filelocal = filelocal.replaceAll(/%20/g, 'B');
+            imagename = imagename.replaceAll(/%20/g, 'B');
+            process.stdout.write(`%`);
+        }
 
         // use local downloaded images
-        bodym = bodym.replace(imgsrc, '../data/' + imagename);
+        bodym = bodym.replaceAll(imgsrc, '../data/' + uniq + '/' + imagename);
 
         if(fs.existsSync(filelocal)) continue;
 
-        if(! imgurl.match(/http/)) imgurl = www[0] + imgurl;       
-        const encodedurl = encodeURI(imgurl);   // handle special char
+        if(! imgurl.match(/http/)) imgurl = 'https://' + urihp + imgurl;
+        let encodedurl = imgurl;
+        
+        if(imgurl.includes('*')) encodedurl= encodeURI(imgurl); // handle special char
 
         try {
             const response = await axios({
@@ -249,21 +344,24 @@ async function save_blog_content(url, file){
                 url: encodedurl,
                 responseType: 'stream',
             });
-            
+
             const w = response.data.pipe(fs.createWriteStream(filelocal));            
             w.on('finish', () => {
                 process.stdout.write(`.`);
             });
         } catch (err) { 
-            console.log("  unescaped char: %s", imgurl);
-            execcmd('wget', [imgurl, '-q', '-O', filelocal], {stdio:'inherit'});
-            continue;
+            try {
+                process.stdout.write(`!`);
+                execcmd('wget', [imgurl, '-q', '-O', filelocal], {stdio:'inherit'});
+             } catch (err) {
+                console.log(err.message);
+             }
         }
     }
     console.log("");
 
     // only keep the blog main body, saved space
-    bodym = bhead_s + bodym + bhead_e;
+    bodym = bhead_s + video + bodym + bhead_e;
     await save_to_file(file, bodym);
 
     let stopt = process.hrtime(stime);
@@ -282,7 +380,7 @@ async function get_all_blog_url2array(urlp, firstpage_only=false, finalpage=0) {
         ONEPAGE = true;
         loadhtml = fs.readFileSync(onepage).toString();
     }else{
-        let resp = await axios.get(urlp, config);
+        let resp = await axios_get(urlp);
         loadhtml = resp.data;
     }
 
@@ -311,6 +409,19 @@ async function get_all_blog_url2array(urlp, firstpage_only=false, finalpage=0) {
     // find all posts in each blog page
     for(let i = 1; i <= lastpage; i++) {
         let page = urlroot +'page/' + i + '/';
+        if(PAGESTY.match(/\w+/)) page = urlroot +'/p' + i;
+        
+        if(urlroot.match('infusedinnovations')){
+            page = urlroot +'/paged-2/' + i;
+        }
+        else if(urlroot.match('netmotionsoftware')){
+            page = urlroot +'/page/' + i;
+        }
+
+        if(urlroot.match(/mandiant/) && i > 1){
+            page = urlroot + '?viewsreference%5Bdata%5D%5Bargument%5D=article_blog&viewsreference%5Bdata%5D%5Blimit%5D=12&viewsreference%5Bdata%5D%5Boffset%5D=&viewsreference%5Bdata%5D%5Bpager%5D=full&viewsreference%5Bdata%5D%5Btitle%5D=0&viewsreference%5Benabled_settings%5D%5Bpager%5D=pager&viewsreference%5Benabled_settings%5D%5Bargument%5D=argument&viewsreference%5Benabled_settings%5D%5Blimit%5D=limit&viewsreference%5Benabled_settings%5D%5Boffset%5D=offset&viewsreference%5Benabled_settings%5D%5Btitle%5D=title&rsq=&page=';
+            page += (i-1);
+        }
         if( ONEPAGE ) page = urlroot + '/1/';
 
         let pburls = await find_blog_links(page);
@@ -370,7 +481,9 @@ async function process_blog_cont2file( stopnum = 10000 ){
 
     // save each individual blog
     let tablerow = '';
-    for(let i = 0, j=1; i < blogs.length; i++) {
+    let indexblg = new Set()
+
+    for(var i = 0, j=1; i < blogs.length; i++) {
         if( i+1 > stopnum) break;
 
         try {
@@ -378,9 +491,12 @@ async function process_blog_cont2file( stopnum = 10000 ){
             let ofile = blgroot + '/' + obj.bfile + '.html';
 
             let f = obj.idblg + '~' + obj.bdesc + '.html';
-            let k = obj.authr+' '+obj.bdesc;   // hash key
+            let k = obj.authr+' '+obj.bdesc;    // hash key
+    
+            if( indexblg.has(k) ) continue;
+            indexblg.add(k);    // add to index at least once
 
-            if(bfilelist.match(f) ){
+            if(bfilelist.match(f) ){    // blog file exists
                 if( bhmap.get(k) != null ){
                     obj.btags = bhmap.get(k).btags;
                     obj.datep = bhmap.get(k).datep;
@@ -390,9 +506,8 @@ async function process_blog_cont2file( stopnum = 10000 ){
                 let bdate;
                 [obj.btags, bdate, obj.bfile] = await save_blog_content(obj.blink, ofile);
                 if( ! bdate.match('2000-01-20') ){ //date found in blog
-                    obj.bdate = bdate;
+                    obj.datep = bdate;
                 }
-                //console.log(obj.btags);
             }
 
             // add a uniq id 
@@ -403,7 +518,8 @@ async function process_blog_cont2file( stopnum = 10000 ){
             var bltgs = '';
             if(obj.btags != null && obj.btags.length > 0)
                 String(obj.btags).split(',').forEach( e => {
-                    bltgs += `<a class="btn btn-success">${e}</a>&nbsp;`;
+                    if(! e.includes('Uncategorized')) 
+                        bltgs += `<a class="btn btn-success">${e}</a>&nbsp;`;
                 });
 
             let rr;
@@ -425,8 +541,8 @@ async function process_blog_cont2file( stopnum = 10000 ){
             //process.stdout.write(`b`.grey);
             if( (i+1)%100 == 0 ){ console.log(); }
         } catch(err) {
-            console.log(i.yellow + blogs[i]);
-            console.error(err);
+            console.log(i+1, ' => ', blogs[i]);
+            console.log(err.stack);
         }
     }
 
@@ -513,7 +629,7 @@ a:hover { color: Orange ; }
 </style></head><body>
 
 <table class="styled-table">
-<caption>${bserver}</caption>
+<caption>${rootfld} </caption>
 <thead>
 <tr >
 <th style="border-radius: 5px 0 0 0;">seq</th>
@@ -568,9 +684,9 @@ function int3(num, size=3) {
 }
        
 function find_post_date($, sec, selector){
-    let dateWrap = $(sec).find(selector)[0],
+    let dateWrap = $(sec).find(selector)[0],      
         postDate = $(dateWrap).text().trim();
-    
+
     if(! postDate.match(/\w+/) ) postDate = 'January 20, 2000',
 
     postDate = postDate.replace("th", '');
@@ -591,18 +707,42 @@ function find_post_date($, sec, selector){
     return dateFormat (new Date(postDate), "%Y-%m-%d", true);
 }
 
-function remove_html_sections($){
-    $(".related-wrapper").remove();             // p81
-    $(".elementor-grid").remove();              // cyolo
-    $(".elementor-author-box__avatar").remove();
-    $(".elementor-post-info").remove();
-    
+function remove_html_sections($){   
     $(".blogtitle").remove();                   // banyan
     $(".blog-page__social-share").remove();     // netskope
     $(".blog-page__social-icons-inner").remove();
     
     $(".navigation.post-navigation").remove();  // attivonetworks
-    $(".attivo-share-wrapper").remove();  
+    $(".attivo-share-wrapper").remove();
+    
+    $(".par.prevnextbutton").remove();          // fireeye cti
+    $(".block-bundle.block-bundle-featured_resources ").remove(); // mandiant
+    $(".rank-math-breadcrumb").remove();        // infusedinnovations
+    $(".newblog-social").remove();       // netmotionsoftware.com
+    $(".addtoany_share_save_container").remove();
+    $(".wp-block-latest-posts__list").remove();
+    $(".wp-block-separator").remove();
+    $(".post-grid.grid").remove();
+    $(".article-byline").remove();  // instasafe
+}
+
+async function axios_get(url){   
+    return await axios.get(url, config)
+    .catch(function (error) {
+        if (error.response) {
+            // Request made and server responded
+            console.log(error.response.status);
+            //console.log(error.response.data);
+            //console.log(error.response.headers);
+            process.exit(1);
+        } else if (error.request) {
+            // The request was made but no response was received
+            console.log(error.request);
+        } else {
+            // Something happened in setting up the request that triggered an Error
+            console.log('error', error.message);
+        }
+    });
 }
 
 function dateFormat (date, fstr, utc) {  
@@ -644,7 +784,7 @@ const arg = process.argv.slice(2);
 switch (arg[0]) {
     case '--save-urls':
         console.log('== save-urls ==');
-        get_all_blog_url2array(urlroot, false, 30);
+        get_all_blog_url2array(urlroot, true);
         break;
     case '--check-new':
         console.log('== check-new ==');
