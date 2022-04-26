@@ -73,16 +73,8 @@ function parse_blog_url($, section){
         let blogFile = dateFormat (new Date(postDate), "%Y-%m-%d", true);
         blogFile += '~' + postID + '~' + title;
 
-        if(isDebug && isVerbs){
-            console.log(`${postID.brightGreen}`);
-            console.log(`${postTitle.yellow}`);
-            console.log(`${postDate.cyan}`);
-            console.log(`${author.red}`);
-            console.log(`${postLink.gray}`);
-            console.log("----"); 
-        }
-
         const item_json = blog_attr(postID, postTitle, author, postLink, postDate, blogFile, postDesc);
+        //console.log(item_json); process.exit(1);
         blogarr.push(item_json);        
     }
     return blogarr;
@@ -128,7 +120,7 @@ async function save_to_file(file, content){
             await fs.writeFile(file, content, function (err) {if (err) throw err;});
         }
     } catch(err) {
-        console.error(err)
+        console.log(err)
     }
 }
 
@@ -141,14 +133,23 @@ async function save_blog_content(url, file){
     //remove product/share/links to keep layout clean
     $(".share").remove();
     $(".blog-plug").remove();
+    $(".btn.follow").remove();
     $(".sharedaddy").remove();
     $(".hidden-lg-up").remove();
     $(".prevnextlinks").remove();
+    $(".col-md-2.col-xs-12").remove();
+    $(".col-md-2.col-xs-12").remove();
+    $(".bio").remove();
+    $(".blog-post-nav").remove();
+    $(".gatsby-image-wrapper").remove();
 
     let title = $("title").text().replace('- LogRocket Blog', '-JK CTI');
     let btags = $('.aretags').find('li').text().split('#').slice(1,);
 
     let bodym = $(".site-content .container").html();
+    if( bodym == undefined)
+        bodym = $(".blog-post").html();
+
     bodym = bodym.replaceAll('srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"', ' ');    
 
     $ = cheerio.load(bodym); // only blog main part
@@ -159,11 +160,9 @@ async function save_blog_content(url, file){
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="JK" content="SZ Threat Intel" />
 <title>${title}</title>
-
-<link rel='stylesheet' id='bootstrap4-css'  href='https://blog.logrocket.com/wp-content/themes/mediumish/assets/css/bootstrap.min.css' type='text/css' media='all' />
-<link rel='stylesheet' id='mediumish-style-css'  href='https://blog.logrocket.com/wp-content/themes/mediumish/style.css?ver=5.9.2' type='text/css' media='all' />
-<link rel="stylesheet" type="text/css" id="wp-custom-css" href="https://blog.logrocket.com/?custom-css=f9bf9daf84" />
-
+<link rel='stylesheet' id='bootstrap4-css' href='../data/bootstrap.min.css' type='text/css' media='all' />
+<link rel='stylesheet' id='divi-plus-styles-css' href='../data/style.css'   type='text/css' media='all' />
+<style>.hljs {background: #ededed !important;}</style>
 </head>
 <body class="post-template-default single single-post single-format-standard">
 <div class="container">
@@ -174,15 +173,29 @@ async function save_blog_content(url, file){
     for(let i=0; i < gg.length; i++ ){
         let imgurl = gg[i].attribs.src;
         
-        if(! imgurl.match(/\w+/)) continue;
+        if(imgurl == undefined || ! imgurl.match(/\w+/)) continue;
 
         let fileimage = imgurl.split('/').slice(-1)[0].split('?')[0];
         let filelocal = datroot + '/' + fileimage;  // save to
 
+        // handle special * in file name
+        if(imgurl.match(/[\*]/)) {
+            filelocal = filelocal.replace('*', 'A');
+            fileimage = fileimage.replace('*', 'A');
+            process.stdout.write(`*`);
+        }
+        if(fileimage.match(/%20/)) {
+            filelocal = filelocal.replaceAll(/%20/g, 'B');
+            fileimage = fileimage.replaceAll(/%20/g, 'B');
+            process.stdout.write(`%`);
+        }
+
+        if (fs.existsSync(filelocal)){ // skip if already downloaded
+            continue;
+        }
+
         gg[i].attribs.src = '../data/' + fileimage; // use local saved images in html
         bodym = bodym.replaceAll(imgurl, '../data/' + fileimage);
-
-        if (fs.existsSync(filelocal)) continue;     // skip if already downloaded
 
         const encodedurl = encodeURI(imgurl);       // handle special char
         try {
@@ -197,9 +210,12 @@ async function save_blog_content(url, file){
                 process.stdout.write(`.`);
             });
         } catch (err) { 
-            console.log("  unescaped char: %s", imgurl);
-            execcmd('wget', [imgurl, '-q', '-O', filelocal], {stdio:'inherit'});
-            continue;
+            try {
+                process.stdout.write(`!`);
+                execcmd('wget', [imgurl, '-q', '-O', filelocal], {stdio:'inherit'});
+             } catch (err) {
+                console.log(err.message);
+             }
         }
     }
     console.log("");
@@ -311,7 +327,7 @@ async function process_blog_cont2file( stopnum = 10000 ){
 
             let ofile = blgroot + '/' + obj.bfile + '.html';
             
-            if (fs.existsSync(ofile)){  // if processed before, get the tags
+            if (fs.existsSync(ofile) && bhmap.has(obj.bfile)){ // if processed before, get the tags
                 obj.btags = bhmap.get(obj.bfile).btags; 
             }else{
                 obj.btags = await save_blog_content(obj.blink, ofile);
@@ -361,64 +377,6 @@ async function process_blog_cont2file( stopnum = 10000 ){
     let stopt = process.hrtime(stime);
     console.log(`total time: ${(stopt[0] * 1e9 + stopt[1])/1e9} seconds`.cyan);
 }
-
-// --- start ---
-
-const arg = process.argv.slice(2);
-
-switch (arg[0]) {
-    case '--save-urls':
-        console.log('== save-urls ==');
-        get_all_blog_url2array(urlroot);
-        break;
-    case '--check-new':
-        console.log('== check-new ==');
-        get_all_blog_url2array(urlroot, true);
-        break;
-    case '--save-blog':
-        console.log('== save-blog ==');
-        if(arg[1] > 0){
-            console.log("process first " + arg[1] + " blogs");
-            process_blog_cont2file(arg[1]);
-        }else{
-            if(arg.length ==2 && arg[1].match(/[a-zA-Z]/)) break;
-
-            console.log("process all blogs");
-            process_blog_cont2file();
-        }
-        break;
-    case '--help':
-    default:
-        let ndjs = path.basename(__filename);
-        console.log(`\nUsage:
-node --inspect ${ndjs} --save-urls
-node --inspect ${ndjs} --save-blog NUM
-node --inspect ${ndjs} --check-new`);
-        
-}
-
-// --- reference ---
-// https://zetcode.com/javascript/axios/
-// https://blog.logrocket.com/parsing-html-nodejs-cheerio/
-// https://www.twilio.com/blog/2017/08/http-requests-in-node-js.html
-// https://blog.abelotech.com/posts/calculate-checksum-hash-nodejs-javascript/
-
-// 1. identify blog style: last page, load more ...
-// 2. locate tags in index page to identify the blog elements: title, date, author ...
-// 3. identify the blog elements in a single blog page: title, main body class ...
-
-// get_all_blog_url2array -> find_blog_links(each page)  -> save_to_file & parse_blog_url
-
-// process_blog_cont2file -> save_blog_content(save img) -> save_to_file
-
-// https://www.npmjs.com/package/colors
-// black red green yellow blue magenta cyan white gray grey
-
-
-// --- index template ---
-// https://dev.to/dcodeyt/creating-beautiful-html-tables-with-css-428l
-// https://css-tricks.com/almanac/properties/b/border-radius/
-// https://codepen.io/faaezahmd/pen/dJeRex
 
 function blog_index(){
     let tt = [];
@@ -557,6 +515,60 @@ function dateFormat (date, fstr, utc) {
   });
 }
 
-// node --inspect get_logrocket_blog.js --save-urls
-// node --inspect get_logrocket_blog.js --save-blog
-// node --inspect get_logrocket_blog.js --check-new
+// --- start ---
+
+const arg = process.argv.slice(2);
+
+switch (arg[0]) {
+    case '--save-urls':
+        console.log('== save-urls ==');
+        get_all_blog_url2array(urlroot);
+        break;
+    case '--check-new':
+        console.log('== check-new ==');
+        get_all_blog_url2array(urlroot, true);
+        break;
+    case '--save-blog':
+        console.log('== save-blog ==');
+        if(arg[1] > 0){
+            console.log("process first " + arg[1] + " blogs");
+            process_blog_cont2file(arg[1]);
+        }else{
+            if(arg.length ==2 && arg[1].match(/[a-zA-Z]/)) break;
+
+            console.log("process all blogs");
+            process_blog_cont2file();
+        }
+        break;
+    case '--help':
+    default:
+        let ndjs = path.basename(__filename);
+        console.log(`\nUsage:
+node --inspect ${ndjs} --save-urls
+node --inspect ${ndjs} --save-blog NUM
+node --inspect ${ndjs} --check-new`);
+        
+}
+
+// --- reference ---
+// https://zetcode.com/javascript/axios/
+// https://blog.logrocket.com/parsing-html-nodejs-cheerio/
+// https://www.twilio.com/blog/2017/08/http-requests-in-node-js.html
+// https://blog.abelotech.com/posts/calculate-checksum-hash-nodejs-javascript/
+
+// 1. identify blog style: last page, load more ...
+// 2. locate tags in index page to identify the blog elements: title, date, author ...
+// 3. identify the blog elements in a single blog page: title, main body class ...
+
+// get_all_blog_url2array -> find_blog_links(each page)  -> save_to_file & parse_blog_url
+
+// process_blog_cont2file -> save_blog_content(save img) -> save_to_file
+
+// https://www.npmjs.com/package/colors
+// black red green yellow blue magenta cyan white gray grey
+
+
+// --- index template ---
+// https://dev.to/dcodeyt/creating-beautiful-html-tables-with-css-428l
+// https://css-tricks.com/almanac/properties/b/border-radius/
+// https://codepen.io/faaezahmd/pen/dJeRex
