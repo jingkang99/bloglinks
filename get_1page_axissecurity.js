@@ -179,29 +179,20 @@ async function save_blog_content(url, file){
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="JK" content="SZ Threat Intel" />
 <title>${title}</title>
-
-<link rel='stylesheet' id='bootstrap4-css'  href='../data/bootstrap.min.css' type='text/css' media='all' />
-<link rel='stylesheet' id='mediumish-style-css'  href='../data/style.css' type='text/css' media='all' />
-<link rel="stylesheet" type="text/css" id="wp-custom-css" href="../data/custom-css" />
-
-</head>
-<body class="post-template-default single single-post single-format-standard">
+<link rel='stylesheet' id='bootstrap4-css' href='../data/bootstrap.min.css'   type='text/css' media='all' />
+<link rel='stylesheet' id='mediumish-style-css'  href='../data/style.min.css' type='text/css' media='all' />
+</head><body class="post-template-default single single-post single-format-standard">
 <div class="container">
 `;
     const bhead_e ='</div></body></html>';
 
-    var gg = $('.wp-block-image')   // parse all images link and save to local
-
-    //let menu = $('.wp-block-image').each(function(i, element) {
-    //  let thing = $(element).find('img').attr('data-lazy-src');
-    //});
-
-    //console.log( $('.wp-block-image'));
+    var gg = $('img')   // parse all images link and save to local
     for(let i=0; i < gg.length; i++ ){
-        let imgurl = $(gg[i]).find('img').attr('data-lazy-src'); // get real image url
-        let srcurl = $(gg[i]).find('img').attr('src');           // whatever in src
+        let imgurl = $(gg[i]).attr('data-lazy-src'); // get real image url
+        let srcurl = $(gg[i]).attr('src');           // whatever in src
 
-        if(! imgurl.match(/\w+/)) continue;
+        if( srcurl == null || ! srcurl.match(/\w+/)) continue;
+        if(! srcurl.match(/data:image/) ) imgurl = srcurl;
 
         let fileimage = imgurl.split('/').slice(-1)[0].split('?')[0];
         let filelocal = datroot + '/' + fileimage;  // save to
