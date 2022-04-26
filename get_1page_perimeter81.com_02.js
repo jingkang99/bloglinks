@@ -84,20 +84,12 @@ function parse_blog_url($, section){
         postDate = postDate.replace("rd", '');
 
         let postID = "post-" + crypto.createHash('md5').update(author+title, 'utf8').digest('hex').slice(0,6);
-        
+
         let blogFile = dateFormat (new Date(postDate), "%Y-%m-%d", true);
         blogFile += '~' + postID + '~' + title;
 
-        if(isDebug && isVerbs){
-            console.log(`${postID.brightGreen}`);
-            console.log(`${postTitle.yellow}`);
-            console.log(`${postDate.cyan}`);
-            console.log(`${author.red}`);
-            console.log(`${postLink.gray}`);
-            console.log("----"); 
-        }
-
         const item_json = blog_attr(postID, postTitle, author, postLink, postDate, blogFile, postDesc);
+        //console.log(item_json); process.exit(1);
         blogarr.push(item_json);
     }
     return blogarr;
@@ -165,7 +157,12 @@ async function save_blog_content(url, file){
     let stime = process.hrtime();
 
     let resp = await axios.get(url, config);
-    var $ = cheerio.load(resp.data)
+    let orgh = resp.data.toString();
+    var $ = cheerio.load(orgh);
+
+    //<meta property="article:published_time" content="2022-04-18T19:30:43+00:00" />
+    let dd = orgh.match(/article:published_time.*?="(.+)T/);
+    let bdate = dd[1];
 
     //remove product/share/links to keep layout clean
     $(".share").remove();
@@ -173,11 +170,9 @@ async function save_blog_content(url, file){
     $(".sharedaddy").remove();
     $(".hidden-lg-up").remove();
     $(".prevnextlinks").remove();
-
     $(".sidebar").remove();
     $(".blogNavbar").remove();
     $(".article__footer").remove();
-    
     $(".related-wrapper").remove();  // p81
 
     let title = $("title").text().replace('- Axis Security', '-JK CTI');
@@ -195,6 +190,12 @@ async function save_blog_content(url, file){
     bodym = bodym.replaceAll(/srcset=".*?"/g, ' ');
     bodym = bodym.replaceAll(/background-image:url\(.*?\);/g, ' ');
     
+    if(file.match('2000-01-20') && bdate != null){
+        file = file.replace('2000-01-20', bdate);
+    }else{
+        bdate = '2000-01-20';
+    }
+
     $ = cheerio.load(bodym); // only blog main part
 
     const bhead_s =`<!DOCTYPE html>
@@ -204,9 +205,10 @@ async function save_blog_content(url, file){
 <meta name="JK" content="SZ Threat Intel" />
 <title>${title}</title>
 
-<link rel='stylesheet' id='bootstrap4-css'  href='../data/bootstrap.min.css' type='text/css' media='all' />
-<link rel='stylesheet' id='mediumish-style-css'  href='../data/style.css' type='text/css' media='all' />
-<link rel="stylesheet" type="text/css" id="wp-custom-css" href="../data/custom-css" />
+<link rel='stylesheet' id='bootstrap4-css' href='../data/bootstrap.min.css' type='text/css' media='all' />
+<link rel='stylesheet' id='divi-plus-styles-css' href='../data/style.css'   type='text/css' media='all' />
+<style>.hljs {background: #ededed !important;}</style>
+
 
 </head>
 <body class="post-template-default single single-post single-format-standard">
@@ -215,20 +217,40 @@ async function save_blog_content(url, file){
     const bhead_e ='</div></body></html>';
 
     var gg = $('img')   // parse all images link and save to local
-    for(let i=0; i < gg.length; i++ ){       
-        let imgurl = gg[i].attribs.src;
-        if(! imgurl.match(/\w+/)) continue;
+    for(let i=0; i < gg.length; i++ ){
+        let imgsrc = $(gg[i]).attr('src');
+        let datsrc = $(gg[i]).attr('data-src');
+        if( imgsrc == null || ! imgsrc.match(/\w+/)) continue;
 
-        let fileimage = imgurl.split('/').slice(-1)[0].split('?')[0];
-        let filelocal = datroot + '/' + fileimage;  // save to
+        let imgurl = imgsrc;
+        if( imgurl.match(/data:image/) ) imgurl = datsrc;
+        if( imgurl == null) continue;
+
+        // skip if already downloaded
+        let imagename = imgurl.split('/').slice(-1)[0].split('?')[0];
+        let filelocal = datroot + '/' + imagename; //save
+
+        // handle special * in file name
+        if(imagename.match(/[\*]/)) {
+            filelocal = filelocal.replace('*', 'A');
+            imagename = imagename.replace('*', 'A');
+            process.stdout.write(`*`);
+        }
+        if(imagename.match(/%20/)) {
+            filelocal = filelocal.replaceAll(/%20/g, 'B');
+            imagename = imagename.replaceAll(/%20/g, 'B');
+            process.stdout.write(`%`);
+        }
 
         // use local downloaded images
-        bodym = bodym.replaceAll(imgurl, '../data/' + fileimage);
+        bodym = bodym.replaceAll(imgsrc, '../data/' + imagename);
 
         if (fs.existsSync(filelocal)) continue;     // skip if already downloaded
 
         if(! imgurl.match(/http/)) imgurl = www[0] + imgurl;       
-        const encodedurl = encodeURI(imgurl);
+        let encodedurl = imgurl;
+        
+        if(imgurl.includes('*')) encodedurl= encodeURI(imgurl); // handle special char
 
         try {
             const response = await axios({
@@ -242,13 +264,12 @@ async function save_blog_content(url, file){
                 process.stdout.write(`.`);
             });
         } catch (err) { 
-                console.log("  unescaped char: %s", imgurl);
-                
-                // url has special char that not handled by axios
-                // inherit will use the stdio of the parent process
+            try {
+                process.stdout.write(`!`);
                 execcmd('wget', [imgurl, '-q', '-O', filelocal], {stdio:'inherit'});
-
-                continue;
+             } catch (err) {
+                console.log(err.message);
+             }
         }
     }
     console.log("");
@@ -264,7 +285,7 @@ async function save_blog_content(url, file){
     // original response data
     // await save_to_file(blgroot + '/' + file + '.resp', resp.data);
 
-    return btags;
+    return [btags, bdate, file];
 }
 
 async function get_all_blog_url2array(urlp, firstpage_only=false, finalpage=0) {
@@ -362,25 +383,45 @@ async function process_blog_cont2file( stopnum = 10000 ){
 
     // save each individual blog
     let tablerow = '';
+    let indexblg = new Set()
     for(let i = 0, j=1; i < blogs.length; i++) {
         if( i+1 > stopnum) break;
 
         try {
             let obj = JSON.parse(blogs[i]);
             let ofile = blgroot + '/' + obj.bfile + '.html';
-
             let f = obj.idblg + '~' + obj.bdesc + '.html';
-            //if (fs.existsSync(ofile)){  // if processed before, get the tags
-            if(bfilelist.match(f)){
-                obj.btags = bhmap.get(obj.authr+' '+obj.bdesc).btags;
+            let k = obj.authr + ' ' + obj.bdesc; // hash key
+            
+            if( indexblg.has(k) ) continue;
+            indexblg.add(k);    // add to index at least once
+            
+            let bdate, bfile;
+            if(bfilelist.match(f) ){
+                if( bhmap.get(k) != null ){
+                    obj.btags = bhmap.get(k).btags;
+                    obj.datep = bhmap.get(k).datep;
+                    obj.bfile = bhmap.get(k).bfile;
+                    obj.bdate = bhmap.get(k).bdate;
+                    bdate = obj.bdate;
+                    bfile = obj.bfile;
+                }
             }else{
-                obj.btags = await save_blog_content(obj.blink, ofile);
+                [obj.btags, bdate, bfile] = await save_blog_content(obj.blink, ofile);
             }
+            bfile = bfile.split('/').slice(-1)[0].split('.')[0];
+
+            obj.bdate = bdate;
+            obj.bfile = bfile;
+            f = 'blog/' + obj.bfile + '.html';
 
             // add a uniq id 
             obj.md5sm = crypto.createHash('md5').update(obj.authr+obj.title, 'utf8').digest('hex').slice(0,16);
 
-            bhmap.set(obj.authr+' '+obj.bdesc, obj);
+            bhmap.set(k, obj);
+
+            obj.btags = []; // extract tag from url path
+            obj.btags.push(obj.blink.split('/').slice(-2)[0]);
 
             var bltgs = '';
             if(obj.btags.length > 0)
@@ -396,8 +437,8 @@ async function process_blog_cont2file( stopnum = 10000 ){
             tablerow += `
 <tr >
 <td >${j}</td>
-<td >${obj.datep}</td>
-<td ><a href="blog/${obj.bfile}.html">${obj.title}</a></td>
+<td >${bdate}</td>
+<td ><a href="${f}">${obj.title}</a></td>
 <td >${bltgs}</a></td>
 <td ><a href="${obj.blink}" target="_blank" class="extlk"></a></td>
 </tr>`;
@@ -406,7 +447,7 @@ async function process_blog_cont2file( stopnum = 10000 ){
             if( (i+1)%100 == 0 ){ console.log(); }
         } catch(err) {
             console.log(i.yellow + blogs[i]);
-            console.error(err)
+            console.log(err)
         }
     }
 
