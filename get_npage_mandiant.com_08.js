@@ -25,7 +25,7 @@ const TITLEST = "| Mandiant";
 const REGULAR = ".cols.cols-3 a";
 const FEATURE = ".MMM";
 
-var TITLEBL = ".blogpostlanding";
+var TITLEBL = ".resource-hero.layout.layout--onecol h1";
 var BODYBLG = ".blog.main";
 var DATESEC = '.entry-meta-block';
 var DATEBLG = ".entry-date";
@@ -194,7 +194,6 @@ async function save_to_file(file, content){
         }
     } catch(err) {
         console.log("cannot save " + file);
-        //console.error(err)
     }
 }
 
@@ -231,7 +230,7 @@ async function save_blog_content(url, file){
 
     // parse date and change file name, when post date not on index page
     let bdate = find_post_date($, datas, dataa);
-        
+ 
     if(file.match('2000-01-20') && bdate != null){
         file = file.replace('2000-01-20', bdate);
     }
@@ -243,10 +242,13 @@ async function save_blog_content(url, file){
     remove_html_sections($);
 
     let bodym = $(bodyt).html() // locate blog main body
+    if(bodym ==null){
+        bodym = $('.resource-body .devider').html();
 
-    // if title/topic not inclued in bodym
-    let topic = $(TITLEBL).text();
-    if(urlroot.match('attivonetworks')) bodym = `<br><h1> ${title} </h1><br>\n` + bodym;
+        // if title/topic not inclued in bodym
+        let topic = $(TITLEBL).text();
+        if(urlroot.match('mandiant')) bodym = `<br><h1> ${title} </h1><br>\n` + bodym;
+    }
 
     // no late load
     bodym = bodym.replaceAll(/srcset=".*?"/g, ' ');
@@ -464,12 +466,12 @@ async function process_blog_cont2file( stopnum = 10000 ){
             obj.md5sm = crypto.createHash('md5').update(obj.authr+obj.title, 'utf8').digest('hex').slice(0,16);
 
             bhmap.set(k, obj);
-
-            var bltgs = '';
+ 
+            var bltgs = '', c = 0;
             if(obj.btags != null && obj.btags.length > 0)
                 String(obj.btags).split(',').forEach( e => {
-                    if(! e.includes('Uncategorized')) 
-                        bltgs += `<a class="btn btn-success">${e}</a>&nbsp;`;
+                    if( ! e.includes('Mandiant') && ! e.includes('Uncategorized') && c < 3)
+                        bltgs += `<a class="btn btn-success">${e}</a>&nbsp;` , c++;
                 });
 
             let rr;
@@ -491,8 +493,8 @@ async function process_blog_cont2file( stopnum = 10000 ){
             //process.stdout.write(`b`.grey);
             if( (i+1)%100 == 0 ){ console.log(); }
         } catch(err) {
-            console.log(i.yellow + blogs[i]);
-            //console.error(err);
+            console.log(i+1, ' => ', blogs[i]);
+            console.log(err.stack);
         }
     }
 

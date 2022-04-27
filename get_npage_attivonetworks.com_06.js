@@ -20,7 +20,7 @@ const urlroot = 'https://www.attivonetworks.com/blogs/';
 const TITLEST = "- MMM";
 const REGULAR = ".uabb-blog-post-content";
 const FEATURE = ".MMM";
-const BODYBLG = ".fl-rich-text";
+const BODYBLG = ".fl-module-content.fl-node-content .fl-rich-text";
 const TITLEBL = ".fl-heading-text";
 const DATEBLG = ".MMM";
 
@@ -55,9 +55,6 @@ function parse_blog_url($, section){
     const posts = $(section);
     let blogarr = [];
 
-    //console.log($( "li[itemprop='datePublished']").text() );
-    //console.log(posts.length); 
-
     for (let i = 0; i < posts.length; i++) {
         let postTitleWrapper = $(posts[i]).find(".uabb-post-heading")[0],
             postTitle = $(postTitleWrapper).text();
@@ -87,15 +84,6 @@ function parse_blog_url($, section){
 
         let blogFile = dateFormat (new Date(postDate), "%Y-%m-%d", true);
         blogFile += '~' + postID + '~' + title;
-
-        if(isDebug && isVerbs){
-            console.log(`${postID.brightGreen}`);
-            console.log(`${postTitle.yellow}`);
-            console.log(`${postDate.cyan}`);
-            console.log(`${author.red}`);
-            console.log(`${postLink.gray}`);
-            console.log("----"); 
-        }
 
         const item_json = blog_attr(postID, postTitle, author, postLink, postDate, blogFile, postDesc);
         //console.log(item_json); process.exit(1);
@@ -170,10 +158,11 @@ async function save_blog_content(url, file){
 
     // parse tags
     let btags = $('.info-list-item-dynamic1').text().replace('Tags:', '').trim();
-    
+    if( btags == null )
+        btags = $('.info-list-content-dynamic1 .uabb-info-list-title').text().replace('Tags:', '').trim();
+
     btags = btags.replace(' < Back', '').replace('< ', '').replace(/ *Back */ig, '');
     if(btags.endsWith(',')) btags = btags.slice(0, -1); //remove last ,
-    if(btags.length > 60  ) btags = '';
 
     // parse date and change file name, when post date not on index page
     let bdate = find_post_date($, DATEBLG);
@@ -218,11 +207,14 @@ async function save_blog_content(url, file){
     var gg = $('img')   // parse all image links and save to local
     for(let i=0; i < gg.length; i++ ){       
         let imgsrc = $(gg[i]).attr('src');
+        if( imgsrc == null) continue;
+
         let datsrc = $(gg[i]).attr('data-src');
-        if(! imgsrc.match(/\w+/)) continue;
+        let lazsrc = $(gg[i]).attr('data-lazy-src');
 
         let imgurl = imgsrc;
         if( imgurl.match(/data:image/) ) imgurl = datsrc;
+        if( imgurl == null) imgurl = lazsrc;
 
         // skip if already downloaded
         let imagename = imgurl.split('/').slice(-1)[0].split('?')[0];
@@ -400,10 +392,11 @@ async function process_blog_cont2file( stopnum = 10000 ){
 
             bhmap.set(k, obj);
 
-            var bltgs = '';
+            var bltgs = '', c = 0;
             if(obj.btags != null && obj.btags.length > 0)
                 String(obj.btags).split(',').forEach( e => {
-                    bltgs += `<a class="btn btn-success">${e}</a>&nbsp;`;
+                    if( ! e.includes('Attivo') && c < 3)
+                        bltgs += `<a class="btn btn-success">${e}</a>&nbsp;` , c++;
                 });
 
             let rr;
