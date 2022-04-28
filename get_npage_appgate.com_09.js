@@ -153,7 +153,7 @@ async function find_blog_links(purl){
     let page = pagroot + '/p' + int3(pnum) + '.html'; 
 
     let firstp = false;
-    if (purl.search(/\/1\//) > 0 ){
+    if (purl.match(/\/p1$/)){
         purl = urlroot;  // blog root page with FEATUREed post
         firstp = true;
     }
@@ -175,7 +175,7 @@ async function find_blog_links(purl){
             html = fs.readFileSync(page).toString();
         }else{
             let resp = await axios.get(purl);
-            //console.log('  get page: ' + purl + ' ' + resp.data.length);
+            console.log('  get page: ' + purl + ' ' + resp.data.length);
             await save_to_file(page, resp.data);
             html = resp.data;
         }
@@ -391,10 +391,6 @@ async function get_all_blog_url2array(urlp, firstpage_only=false, finalpage=0) {
         let page = urlroot +'page/' + i + '/';
         if(PAGESTY.match(/\w+/)) page = urlroot +'/p' + i;
 
-        if(urlroot.match(/mandiant/) && i > 1){
-            page = urlroot + '?viewsreference%5Bdata%5D%5Bargument%5D=article_blog&viewsreference%5Bdata%5D%5Blimit%5D=12&viewsreference%5Bdata%5D%5Boffset%5D=&viewsreference%5Bdata%5D%5Bpager%5D=full&viewsreference%5Bdata%5D%5Btitle%5D=0&viewsreference%5Benabled_settings%5D%5Bpager%5D=pager&viewsreference%5Benabled_settings%5D%5Bargument%5D=argument&viewsreference%5Benabled_settings%5D%5Blimit%5D=limit&viewsreference%5Benabled_settings%5D%5Boffset%5D=offset&viewsreference%5Benabled_settings%5D%5Btitle%5D=title&rsq=&page=';
-            page += (i-1);
-        }
         if( ONEPAGE ) page = urlroot + '/1/';
 
         let pburls = await find_blog_links(page);

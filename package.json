@@ -4,6 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
+    "async": "^3.2.3",
     "axios": "^0.26.1",
     "cheerio": "^1.0.0-rc.10",
     "colors": "^1.4.0",

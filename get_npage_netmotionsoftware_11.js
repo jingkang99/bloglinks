@@ -30,10 +30,10 @@ var IDXTITL = ".title_link";
 var IDXDATE = ".post_date";
 var IDXAUTH = ".author";
 
-var BDYBLOG = ".entry-content";
+var BDYBLOG = ".type-post.status-publish";
 var BDYDATE = ".MMM";
 var DBYAUTH = '.MMM';
-var BDYTAGS = ".MMM";
+var BDYTAGS = ".entry-meta .entry-categories";
 var BDYTITL = ".content-sidebar-wrap .entry-title";
 
 const ua_chrm = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36';
@@ -245,6 +245,11 @@ async function save_blog_content(url, file){
         tagaa = ".topic-hero div";
     }
 
+    $(".sidebar-wrap").remove();
+    $(".code-block.code-block-3").remove();
+    $(".code-block.code-block-5").remove();
+    $(".code-block.code-block-7").remove();
+    
     // parse tags
     let tagbb = $(tagaa), tagtt = [];
     for (let i = 0; i < tagbb.length && i < 3; i++) {
@@ -278,13 +283,14 @@ async function save_blog_content(url, file){
     // if title/topic not inclued in bodym
     let topic = $(BDYTITL).text().trim();
     if(urlroot.match('appgate') ||
-       urlroot.match('netmotionsoftware') ) 
+       urlroot.match('NNN') ) 
        bodym = `<br><h1> ${topic} </h1><br>\n` + bodym;
 
     // no late load
     bodym = bodym.replaceAll(/Continue reading/g, '');
     bodym = bodym.replaceAll(/srcset=".*?"/g, ' ');
     bodym = bodym.replaceAll(/background-image:url\(.*?\);/g, ' ');
+    bodym = bodym.replaceAll('<h3>Continue Reading</h3>', ' ');
 
     $ = cheerio.load(bodym); // re-parse blog body
 
@@ -296,7 +302,8 @@ async function save_blog_content(url, file){
 <title>${title}</title>
 <link rel='stylesheet' id='bootstrap4-css' href='../data/bootstrap.min.css'   type='text/css' media='all' />
 <link rel='stylesheet' id='divi-plus-styles-css' href='../data/style.min.css' type='text/css' media='all' />
-<style>.alignright { display: inline; float: right; margin-left: 1.5em;}</style>
+<style>.alignright { display: inline; float: right; margin-left: 1.5em;}
+img { max-width: 100%; height: auto; } </style>
 </head><body class="post-template-default single single-post single-format-standard"><br><div class="container">
 `;
     const bhead_e ='</div></body></html>';

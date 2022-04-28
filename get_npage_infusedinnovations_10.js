@@ -164,7 +164,7 @@ async function find_blog_links(purl){
     let page = pagroot + '/p' + int3(pnum) + '.html'; 
 
     let firstp = false;
-    if (purl.search(/\/1\//) > 0 ){
+    if (purl.search(/\/1$/) > 0 ){
         purl = urlroot;  // blog root page with FEATUREed post
         firstp = true;
     }

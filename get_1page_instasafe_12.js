@@ -80,22 +80,13 @@ const blgindex = prjroot + '/index.html' ;
 console.log("  one page " + onepage.cyan);
 
 const config = {
-    headers: { 'User-Agent': ua_chrm, 'accept': '*/*', 'referer': 'https://colortokens.com/blog/' }
+    headers: { 'User-Agent': ua_chrm, 'accept': '*/*' },
+    timeout: 1000 * 1.5,
 }
 
 function parse_blog_url($, section){
     const posts = $(section);
     let blogarr = [];
-
-    // A ref exclued in section, so get the array first
-    /* let temp = $(".cols.cols-3").find("a"); 
-    let aref = [];
-    for(let i=0; i < temp.length; i++){
-        let ll = $(temp[i]).attr("href");
-        if(! ll.match('https') ) ll = www[0] + postLink;
-        aref.push(ll);
-    }*/
-    //console.log(posts.length);
 
     for (let i = 0; i < posts.length; i++) {
         let postTitleWrapper = $(posts[i]).find(IDXTITL)[0],
@@ -112,7 +103,7 @@ function parse_blog_url($, section){
 
         let postLinkWrapper = $(posts[i]).find("> a")[0],
             postLink = $(postLinkWrapper).attr("href");
-        if(! postLink.match('https') ) postLink = www[0] + postLink;
+        if(! postLink.match('https') ) postLink = 'https://' + www[1] + postLink;
 
         let author = bserver, postDate = 'January 5, 2000', postDesc = title;
 
@@ -163,20 +154,20 @@ async function find_blog_links(purl){
     let page = pagroot + '/p' + int3(pnum) + '.html'; 
 
     let firstp = false;
-    if (purl.search(/\/1$/) > 0 ){
+    if (purl.match(/\/1\/$/)){
         purl = urlroot;  // blog root page with FEATUREed post
         firstp = true;
     }
 
-    //console.log(ONEPAGE, CHCKNEW, firstp, purl);
+    console.log(ONEPAGE, CHCKNEW, firstp, purl);
 
     var html;
     if( ONEPAGE ) {
         if(CHCKNEW) {
             let resp = await axios_get(purl);
 
-            await save_to_file(page, resp.data);
-            html = resp.data;            
+            await save_to_file(page, resp);
+            html = resp;            
         }
         else{
             console.log('reading from: ' + onepage);
@@ -187,9 +178,9 @@ async function find_blog_links(purl){
             html = fs.readFileSync(page).toString();
         }else{
             let resp = await axios_get(purl);
-            //console.log('  get page: ' + purl + ' ' + resp.data.length);
-            await save_to_file(page, resp.data);
-            html = resp.data;
+            //console.log('  get page: ' + purl + ' ' + resp.length);
+            await save_to_file(page, resp);
+            html = resp;
         }
     }
 
@@ -228,8 +219,8 @@ async function save_to_file(file, content){
 async function save_blog_content(url, file){   
     let stime = process.hrtime();
 
-    let resp = await axios_get(url);
-    var $ = cheerio.load(resp.data)
+    let data = await axios_get(url);
+    var $ = cheerio.load(data);
 
     let MANDI = false;
     let title = $("title").text(), titorg = title;
@@ -351,8 +342,9 @@ async function save_blog_content(url, file){
             });
         } catch (err) { 
             try {
-                process.stdout.write(`!`);
-                execcmd('wget', [imgurl, '-q', '-O', filelocal], {stdio:'inherit'});
+                process.stdout.write(`! `);
+                console.log(imgurl);
+                execcmd('wget', [imgurl, '--connect-timeout=1 --tries=1','-q', '-O', filelocal], {stdio:'inherit'});
              } catch (err) {
                 console.log(err.message);
              }
@@ -381,7 +373,7 @@ async function get_all_blog_url2array(urlp, firstpage_only=false, finalpage=0) {
         loadhtml = fs.readFileSync(onepage).toString();
     }else{
         let resp = await axios_get(urlp);
-        loadhtml = resp.data;
+        loadhtml = resp;
     }
 
     var $ = cheerio.load(loadhtml);
@@ -418,10 +410,6 @@ async function get_all_blog_url2array(urlp, firstpage_only=false, finalpage=0) {
             page = urlroot +'/page/' + i;
         }
 
-        if(urlroot.match(/mandiant/) && i > 1){
-            page = urlroot + '?viewsreference%5Bdata%5D%5Bargument%5D=article_blog&viewsreference%5Bdata%5D%5Blimit%5D=12&viewsreference%5Bdata%5D%5Boffset%5D=&viewsreference%5Bdata%5D%5Bpager%5D=full&viewsreference%5Bdata%5D%5Btitle%5D=0&viewsreference%5Benabled_settings%5D%5Bpager%5D=pager&viewsreference%5Benabled_settings%5D%5Bargument%5D=argument&viewsreference%5Benabled_settings%5D%5Blimit%5D=limit&viewsreference%5Benabled_settings%5D%5Boffset%5D=offset&viewsreference%5Benabled_settings%5D%5Btitle%5D=title&rsq=&page=';
-            page += (i-1);
-        }
         if( ONEPAGE ) page = urlroot + '/1/';
 
         let pburls = await find_blog_links(page);
@@ -726,8 +714,9 @@ function remove_html_sections($){
     $(".article-byline").remove();  // instasafe
 }
 
-async function axios_get(url){   
-    return await axios.get(url, config)
+async function axios_get(url){
+    let html;
+    let resp = await axios.get(url, config)
     .catch(function (error) {
         if (error.response) {
             // Request made and server responded
@@ -737,12 +726,22 @@ async function axios_get(url){
             process.exit(1);
         } else if (error.request) {
             // The request was made but no response was received
-            console.log(error.request);
+            //console.log(error.message);
+            process.stdout.write(`@`);
+            let tmpf = 'axios.tmp';
+            try {
+                fs.unlinkSync(tmpf);
+            } catch(err) {
+            }
+
+            execcmd('curl', ['--user-agent', ua_chrm, '-H', 'authority: www.akamai.com', '-s', '-o', tmpf, url], {stdio:'inherit'});
+            html = fs.readFileSync(tmpf).toString();
         } else {
             // Something happened in setting up the request that triggered an Error
             console.log('error', error.message);
         }
     });
+    return html != null ? html : resp.data;
 }
 
 function dateFormat (date, fstr, utc) {  
@@ -798,7 +797,6 @@ switch (arg[0]) {
             process_blog_cont2file(arg[1]);
         }else{
             if(arg.length ==2 && arg[1].match(/[a-zA-Z]/)) break;
-
             console.log("process all blogs");
             process_blog_cont2file();
         }
@@ -809,6 +807,5 @@ switch (arg[0]) {
         console.log(`\nUsage:
 node --inspect ${ndjs} --save-urls
 node --inspect ${ndjs} --save-blog NUM
-node --inspect ${ndjs} --check-new`);
-        
+node --inspect ${ndjs} --check-new`);       
 }

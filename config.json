@@ -1,0 +1,51 @@
+{
+    "zero trust": [
+        { "perimeter81"     : "yes" },
+        { "axissecurity"    : "yes" },
+        { "banyansecurity"  : "yes" },
+        { "twingate"        : "yes" },
+        { "cyolo"           : "yes" },
+        { "appgate"         : "yes" },
+        { "instasafe"       : "yes" },
+        { "netmotionsoftware"   : "yes" },
+        { "infusedinnovations"  : "yes" }
+    ],
+
+    "edr": [
+        { "mandiant"        : "yes" },
+        { "fireeye"         : "no" },
+        { "crowdstrike"     : "no" },
+        { "sentinelone"     : "no" },
+        { "cybereason"      : "no" },
+        { "ariva"           : "no" },
+        { "bitdefender"     : "no" }
+    ],
+
+    "ndr": [
+        { "netskope"        : "yes" },
+        { "corelight"       : "no" },
+        { "symantec"        : "no" },
+        { "awake"           : "no" }
+    ],
+
+    "ess": [
+        { "attivonetworks"  : "yes" },
+        { "fireeye.com-cti" : "yes" },
+        { "mcafee"          : "no" },
+        { "symantec"        : "no" },
+        { "microsoft"       : "no" },
+        { "cisco"           : "no" },
+        { "ibm"             : "no" },
+        { "verizon"         : "no" },
+        { "att"             : "no" },
+        { "trendmiro"       : "no" }
+    ],
+
+    "cti": [
+        { "threatpost"      : "no" }
+    ],
+
+    "web tech": [
+        { "logrocket"       : "yes" }
+    ]
+}
