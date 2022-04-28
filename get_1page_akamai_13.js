@@ -81,23 +81,13 @@ const blgindex = prjroot + '/index.html' ;
 console.log("  one page " + onepage.cyan);
 
 const config = {
-    headers: { 'User-Agent': ua_chrm, 'accept': '*/*', 'referer': 'https://colortokens.com/blog/' },
-    timeout: 1000 * 1.5,
+    headers: { 'User-Agent': ua_chrm, 'accept': '*/*', 'referer': www[1] },
+    timeout: 1000 * 2,
 }
 
 function parse_blog_url($, section){
     const posts = $(section);
     let blogarr = [];
-
-    // A ref exclued in section, so get the array first
-    /* let temp = $(".cols.cols-3").find("a"); 
-    let aref = [];
-    for(let i=0; i < temp.length; i++){
-        let ll = $(temp[i]).attr("href");
-        if(! ll.match('https') ) ll = www[0] + postLink;
-        aref.push(ll);
-    }*/
-    //console.log(posts.length);
 
     for (let i = 0; i < posts.length; i++) {
         let postTitleWrapper = $(posts[i]).find(IDXTITL)[0],
@@ -167,24 +157,29 @@ async function find_blog_links(purl){
 
     let firstp = false;
     if (purl.match( /(\/1$|\/1\/$)/ ) ){ // /blog/1/ or /blog/1
-        purl = urlroot;
+        purl = urlroot + '?page=1';
         firstp = true;
     }
-    //console.log(ONEPAGE, CHCKNEW, pnum, firstp, purl);
+    console.log(ONEPAGE, CHCKNEW, pnum, firstp, purl);
 
     var html;
     if( ONEPAGE ) {
         if(CHCKNEW) {
-            let resp = await axios_get(purl);
-            await save_to_file(page, resp);
-            html = resp;
+            if(bserver.match('akamai')){
+                html = fs.readFileSync(pagroot + '/p001.html').toString();
+                console.log('loading from: ' + pagroot + '/p001.html');
+            }else{
+                let resp = await axios_get(purl);
+                await save_to_file(page, resp);
+                html = resp;
+            }
         }
         else{
             html = fs.readFileSync(onepage).toString();
             console.log('reading from: ' + onepage);
         }
         console.log('1 page bytes: ' + html.length);
-        
+
     }else{       
         if (fs.existsSync(page) && ! firstp ){   // always read the 1st page
             html = fs.readFileSync(page).toString();
@@ -232,8 +227,10 @@ async function save_blog_content(url, file){
     let stime = process.hrtime();
 
     let data = await axios_get(url);
+    if(data.length < 100) return [null, null, null];
+    
     var $ = cheerio.load(data);
-
+    
     let MANDI = false;
     let title = $("title").text(), titorg = title;
     if(title.includes(' | Mandiant')) MANDI= true;
@@ -251,10 +248,11 @@ async function save_blog_content(url, file){
 
     // parse tags
     let tagbb = $(tagaa), tagtt = [];
-    for (let i = 0; i < tagbb.length && i < 3; i++) {
+    for (let i = 0, j = 0; i < tagbb.length && j < 3; i++) {
         //console.log($(tagbb[i]).text());
         if( $(tagbb[i]).text().match(/(Company|News|Culture)/)) continue;
         tagtt.push( $(tagbb[i]).text().trim() );
+        j++;
     }
     let btags = tagtt.join(',');
 
@@ -263,7 +261,7 @@ async function save_blog_content(url, file){
 
     // parse date and change file name, when post date not on index page
     let bdate = find_post_date($, datas, dataa);
-        
+
     if(file.match('2000-01-20') && bdate != null){
         file = file.replace('2000-01-20', bdate);
     }
@@ -275,8 +273,7 @@ async function save_blog_content(url, file){
     remove_html_sections($);
 
     let bodym = $(bodyt).html() // locate blog main body
-    if(bodym == null) bodym = $('.simple').html();    // appgate
-    if(bodym == null) bodym = $('.fl-row.fl-row-full-width.fl-row-bg-none').html(); // infusedinnovations
+    if(bodym == null) bodym = $('.simple').html(); // appgate
     
     let video = $('#video-70-30').html(); // video of appgate 
     video == null ? video = '' : process.stdout.write(`v`); 
@@ -357,7 +354,7 @@ async function save_blog_content(url, file){
         } catch (err) { 
             try {
                 process.stdout.write(`!`);
-                execcmd('wget', [imgurl, '-q', '-O', filelocal], {stdio:'inherit'});
+                execcmd('wget', [imgurl, '--connect-timeout=1 --tries=1','-q', '-O', filelocal], {stdio:'inherit'});
              } catch (err) {
                 console.log(err.message);
              }
@@ -424,10 +421,6 @@ async function get_all_blog_url2array(urlp, firstpage_only=false, finalpage=0) {
             page = urlroot +'/page/' + i;
         }
 
-        if(urlroot.match(/mandiant/) && i > 1){
-            page = urlroot + '?viewsreference%5Bdata%5D%5Bargument%5D=article_blog&viewsreference%5Bdata%5D%5Blimit%5D=12&viewsreference%5Bdata%5D%5Boffset%5D=&viewsreference%5Bdata%5D%5Bpager%5D=full&viewsreference%5Bdata%5D%5Btitle%5D=0&viewsreference%5Benabled_settings%5D%5Bpager%5D=pager&viewsreference%5Benabled_settings%5D%5Bargument%5D=argument&viewsreference%5Benabled_settings%5D%5Blimit%5D=limit&viewsreference%5Benabled_settings%5D%5Boffset%5D=offset&viewsreference%5Benabled_settings%5D%5Btitle%5D=title&rsq=&page=';
-            page += (i-1);
-        }
         if( ONEPAGE ) page = urlroot + '/1/';
 
         let pburls = await find_blog_links(page);
@@ -504,10 +497,18 @@ async function process_blog_cont2file( stopnum = 10000 ){
             let ofile = blgroot + '/' + obj.bfile + '.html';
 
             let f = obj.idblg + '~' + obj.bdesc + '.html';
-            let k = obj.authr+' '+obj.bdesc;    // hash key
+            let k = obj.authr + ' ' + obj.bdesc; // hash key
     
             if( indexblg.has(k) ) continue;
             indexblg.add(k);    // add to index at least once
+
+            if( obj.blink.match('traffic-super-bowl-') ||
+                obj.blink.match('botnets-in-china-and-japan') ||
+                obj.blink.match('strategy-for-the-office-anywhere')
+               ) {
+                console.log('ignor: ', obj.blink);
+                continue;
+            }
 
             if(bfilelist.match(f) ){    // blog file exists
                 if( bhmap.get(k) != null ){
@@ -518,6 +519,10 @@ async function process_blog_cont2file( stopnum = 10000 ){
             }else{
                 let bdate;
                 [obj.btags, bdate, obj.bfile] = await save_blog_content(obj.blink, ofile);
+                if(obj.bfile == null){
+                    console.log('error: ', obj.blink);
+                    continue;
+                }
                 if( ! bdate.match('2000-01-20') ){ //date found in blog
                     obj.datep = bdate;
                 }
@@ -528,11 +533,11 @@ async function process_blog_cont2file( stopnum = 10000 ){
 
             bhmap.set(k, obj);
 
-            var bltgs = '';
+            var bltgs = '', c = 0;
             if(obj.btags != null && obj.btags.length > 0)
                 String(obj.btags).split(',').forEach( e => {
-                    if(! e.includes('Uncategorized')) 
-                        bltgs += `<a class="btn btn-success">${e}</a>&nbsp;`;
+                    if( ! e.includes('Attivo') && ! e.includes('Uncategorized') && c < 3)
+                        bltgs += `<a class="btn btn-success">${e}</a>&nbsp;` , c++;
                 });
 
             let rr;
@@ -841,4 +846,26 @@ node --inspect ${ndjs} --check-new`);
         
 }
 
-// check-new not working, raw blog data is in data-prop-posts that is rendered by js
+// check-new not working, raw blog data embedded in data-prop-posts - json array, 
+// using puppeteer to render the page 
+// !! manually save the first complete page to page/p001.html, then run --check-new
+/*
+curl 'https://www.akamai.com/blog/security/attacks-anti-malware-dns-spoofing' \
+  -H 'authority: www.akamai.com' \
+  -H 'accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,* /*;q=0.8,application/signed-exchange;v=b3;q=0.9' \
+  -H 'accept-language: en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7' \
+  -H 'cache-control: max-age=0' \
+  -H 'downlink: 6.1' \
+  -H 'dpr: 1' \
+  -H 'sec-ch-ua: " Not A;Brand";v="99", "Chromium";v="100", "Google Chrome";v="100"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "Windows"' \
+  -H 'sec-fetch-dest: document' \
+  -H 'sec-fetch-mode: navigate' \
+  -H 'sec-fetch-site: cross-site' \
+  -H 'sec-fetch-user: ?1' \
+  -H 'upgrade-insecure-requests: 1' \
+  -H 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36' \
+  -H 'viewport-width: 1920' \
+  --compressed
+*/

@@ -734,7 +734,7 @@ async function axios_get(url){
             } catch(err) {
             }
 
-            execcmd('curl', ['--user-agent', ua_chrm, '-H', 'authority: www.akamai.com', '-s', '-o', tmpf, url], {stdio:'inherit'});
+            execcmd('curl', ['--user-agent', ua_chrm, '-s', '-o', tmpf, url], {stdio:'inherit'});
             html = fs.readFileSync(tmpf).toString();
         } else {
             // Something happened in setting up the request that triggered an Error
