@@ -7,11 +7,12 @@
         { "cyolo"           : "yes" },
         { "appgate"         : "yes" },
         { "instasafe"       : "yes" },
+        { "attivonetworks"  : "yes" },
         { "netmotionsoftware"   : "yes" },
         { "infusedinnovations"  : "yes" }
     ],
 
-    "edr": [
+    "xdr": [
         { "mandiant"        : "yes" },
         { "fireeye"         : "no" },
         { "crowdstrike"     : "no" },
@@ -21,7 +22,8 @@
         { "bitdefender"     : "no" }
     ],
 
-    "ndr": [
+    "sase": [
+        { "akamai"          : "yes" },
         { "netskope"        : "yes" },
         { "corelight"       : "no" },
         { "symantec"        : "no" },
@@ -29,8 +31,7 @@
     ],
 
     "ess": [
-        { "attivonetworks"  : "yes" },
-        { "fireeye.com-cti" : "yes" },
+        { "fireeye.com-cti" : "no" },
         { "mcafee"          : "no" },
         { "symantec"        : "no" },
         { "microsoft"       : "no" },
