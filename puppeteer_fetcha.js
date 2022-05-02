@@ -207,7 +207,7 @@ a:hover { color: Orange ; }
 <th >Size</th>
 <th >Headquarter</th>
 <th >Founded</th>
-<th >Job Openings</th>
+<th >Jobs</th>
 <th style="border-radius: 0 5px 0 0;">Link</th>
 </tr></thead>
 <tbody>
