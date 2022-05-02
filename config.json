@@ -1,52 +1,52 @@
 {
     "zero trust": [
-        { "perimeter81"     : "yes" },
-        { "axissecurity"    : "yes" },
-        { "banyansecurity"  : "yes" },
-        { "twingate"        : "yes" },
-        { "cyolo"           : "yes" },
-        { "appgate"         : "yes" },
-        { "instasafe"       : "yes" },
-        { "attivonetworks"  : "yes" },
-        { "netmotionsoftware"   : "yes" },
-        { "infusedinnovations"  : "yes" }
+        { "perimeter81"     : "yes",    "linkedin": "perimeter-81" },
+        { "axissecurity"    : "yes",    "linkedin": "axis-security"},
+        { "banyansecurity"  : "yes",    "linkedin": "banyansecurity"},
+        { "twingate"        : "yes",    "linkedin": "twingate"},
+        { "cyolo"           : "yes",    "linkedin": "cyolo"},
+        { "appgate"         : "yes",    "linkedin": "appgate-security"},
+        { "instasafe"       : "yes",    "linkedin": "instasafe"},
+        { "attivonetworks"  : "yes",    "linkedin": "attivo-networks-inc-"},
+        { "netmotionsoftware"  : "yes", "linkedin": "netmotion-software"},
+        { "infusedinnovations" : "yes", "linkedin": "infused-innovations-inc"}
     ],
 
     "xdr": [
-        { "mandiant"        : "yes" },
-        { "fireeye"         : "no" },
-        { "crowdstrike"     : "no" },
-        { "sentinelone"     : "no" },
-        { "cybereason"      : "no" },
-        { "ariva"           : "no" },
-        { "bitdefender"     : "no" }
+        { "mandiant"        : "yes",    "linkedin": "mandiant"},
+        { "fireeye"         : "no",     "linkedin": "cybereason"},
+        { "crowdstrike"     : "no",     "linkedin": "netskope"},
+        { "sentinelone"     : "no",     "linkedin": "sentinelone"},
+        { "cybereason"      : "no",     "linkedin": "cybereason"},
+        { "ariva"           : "no",     "linkedin": "ariva"},
+        { "bitdefender"     : "no",     "linkedin": "bitdefender"}
     ],
 
     "sase": [
-        { "akamai"          : "yes" },
-        { "netskope"        : "yes" },
-        { "corelight"       : "no" },
-        { "symantec"        : "no" },
-        { "awake"           : "no" }
+        { "akamai"          : "yes",    "linkedin": "akamai-technologies"},
+        { "netskope"        : "yes",    "linkedin": "netskope"},
+        { "corelight"       : "no",     "linkedin": "corelight"},
+        { "symantec"        : "no",     "linkedin": "symantec"},
+        { "awake"           : "no",     "linkedin": "awake"},
     ],
 
     "ess": [
         { "fireeye.com-cti" : "no" },
-        { "mcafee"          : "no" },
-        { "symantec"        : "no" },
-        { "microsoft"       : "no" },
-        { "cisco"           : "no" },
-        { "ibm"             : "no" },
-        { "verizon"         : "no" },
-        { "att"             : "no" },
-        { "trendmiro"       : "no" }
+        { "mcafee"          : "no",  "linkedin": "cybereason"},
+        { "symantec"        : "no",  "linkedin": "symantec"},
+        { "microsoft"       : "no",  "linkedin": "microsoft"},
+        { "cisco"           : "no",  "linkedin": "cisco"},
+        { "ibm"             : "no",  "linkedin": "ibm"},
+        { "verizon"         : "no",  "linkedin": "verizon"},
+        { "att"             : "no",  "linkedin": "att"},
+        { "trendmiro"       : "no",  "linkedin": "trend-micro"},
     ],
 
     "cti": [
-        { "threatpost"      : "no" }
+        { "threatpost"      : "no",  "linkedin": "cybereason"},
     ],
 
     "web tech": [
-        { "logrocket"       : "yes" }
+        { "logrocket"       : "yes", "linkedin": "logrocket"}
     ]
 }
