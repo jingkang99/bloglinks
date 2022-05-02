@@ -66,28 +66,44 @@ check if new blog published, and update the array
 
 ### Corporates Followed
 zero trust
-- perimeter81       get_1page_perimeter81.com_02.js
-- axissecurity      get_1page_axissecurity.js
-- banyansecurity    get_1page_banyansecurity.io_04.js
-- twingate          get_1page_twingate.com.js
-- cyolo             get_npage_cyolo.io_03.js
-- appgate           get_npage_appgate.com_09.js
-- instasafe         get_1page_instasafe_12.js
-- attivonetworks    get_npage_attivonetworks.com_06.js
-- netmotionsoftware get_npage_netmotionsoftware_11.js
-- infusedinnovat    get_npage_infusedinnovations_10.js
+
+| Corp   |    Script |
+|----------| ------:|
+| perimeter81  | get_1page_perimeter81.com_02.js |
+| axissecurity | get_1page_axissecurity.js       |
+| banyansecurity | get_1page_banyansecurity.io_04.js |
+| twingate | get_1page_twingate.com.js |
+| cyolo | get_npage_cyolo.io_03.js |
+| appgate | get_npage_appgate.com_09.js |
+| instasafe | get_1page_instasafe_12.js |
+| attivonetworks | get_npage_attivonetworks.com_06.js |
+| netmotionsoftware | get_npage_netmotionsoftware_11.js |
+| infusedinnovat | get_npage_infusedinnovations_10.js |
 
 xdr
-- mandiant          get_npage_mandiant.com_08.js                    
+
+| Corp   |    Script |
+|----------| ------:|
+| mandiant  | get_npage_mandiant.com_08.js |
+
 
 sase
-- akamai            get_1page_akamai_13.js
-- netskope          get_1page_netskope.com_05.js
+
+| Corp   |    Script |
+|----------| ------:|
+| akamai  | get_1page_akamai_13.js |
+| netskope  | get_1page_netskope.com_05.js |
 
 gui dev
-- logrocket         get_logrocket_blog.js
+
+| Corp   |    Script |
+|----------| ------:|
+| logrocket  | get_logrocket_blog.js|
 
  no more update
-- fireeye           get_1page_fireeye.com_07.js
+- fireeye
 
 ![image](https://user-images.githubusercontent.com/10793075/165709471-3d394340-bdca-4858-9dd7-847f997a9e65.png)
+
+![image](https://user-images.githubusercontent.com/10793075/166193818-43a97046-3d1c-4270-8e27-e8c308ef0e32.png)
+
