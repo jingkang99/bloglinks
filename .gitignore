@@ -1,0 +1,7 @@
+node_modules/
+axios.tmp
+corps.hash
+linkf.html
+linkf.png
+temp/
+yarn.lock
