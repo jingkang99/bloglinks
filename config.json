@@ -9,11 +9,15 @@
         { "instasafe"       : "yes",    "linkedin": "instasafe"},
         { "attivonetworks"  : "yes",    "linkedin": "attivo-networks-inc-"},
         { "netmotionsoftware"  : "yes", "linkedin": "netmotion-software"},
-        { "infusedinnovations" : "yes", "linkedin": "infused-innovations-inc"}
+        { "infusedinnovations" : "yes", "linkedin": "infused-innovations-inc"},
+        { "doubleoctopus"   : "yes",    "linkedin": "secret-double-octopus"},
+        { "delinea"         : "yes",    "linkedin": "delinea"},
+        { "gurucul"         : "yes",    "linkedin": "gurucul"}
     ],
 
     "xdr": [
         { "mandiant"        : "yes",    "linkedin": "mandiant"},
+        { "corelight"       : "yes",    "linkedin": "corelight"},
         { "fireeye"         : "no",     "linkedin": "cybereason"},
         { "crowdstrike"     : "no",     "linkedin": "netskope"},
         { "sentinelone"     : "no",     "linkedin": "sentinelone"},
@@ -25,7 +29,6 @@
     "sase": [
         { "akamai"          : "yes",    "linkedin": "akamai-technologies"},
         { "netskope"        : "yes",    "linkedin": "netskope"},
-        { "corelight"       : "no",     "linkedin": "corelight"},
         { "symantec"        : "no",     "linkedin": "symantec"},
         { "awake"           : "no",     "linkedin": "awake"},
     ],

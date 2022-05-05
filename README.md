@@ -78,14 +78,17 @@ zero trust
 | instasafe | get_1page_instasafe_12.js |
 | attivonetworks | get_npage_attivonetworks.com_06.js |
 | netmotionsoftware | get_npage_netmotionsoftware_11.js |
-| infusedinnovat | get_npage_infusedinnovations_10.js |
+| infusedinnovat| get_npage_infusedinnovations_10.js |
+| doubleoctopus | get_npage_doubleoctopus_15.js |
+| delinea       | get_npage_delinea_16.js |
+| gurucul       | get_1page_gurucul_17.js |
 
 xdr
 
 | Corp   |    Script |
 |----------| ------:|
 | mandiant  | get_npage_mandiant.com_08.js |
-
+| corelight | get_1page_corelight_14.js |
 
 sase
 
