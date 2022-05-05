@@ -20,11 +20,21 @@ const sites = [
   'netskope',
   'perimeter-81',
   'twingate',
+
+  'gurucul',
+  'delinea',
+  'secret-double-octopus',
   
+  'okta',
   'vectra_ai',
   'hashicorp',
   'lookout',
   'illumio',
+  'colortokens-inc.',
+  'guardicore',
+  'jumpcloud',
+  'centrify-corporation',
+
 ];
 
 var corp = process.argv[2] || 'crowdstrike';
@@ -92,14 +102,17 @@ async function get_corp_info(corps){
         corpabout = `https://www.linkedin.com/company/${corp0}/about/`;
         let jobscount = `https://www.linkedin.com/company/${corp0}/jobs/`;
 
+        let fhtml = cpinfo + `${corp0}.html`;
+        let jctxt = cpinfo + `${corp0}_jc.txt`;
+
+        if(fs.existsSync(fhtml)) continue;
+
         await page.goto(corpabout, {waitUntil: 'load', timeout: 0});
         await page.waitForSelector('.overflow-hidden', {timeout: 3000});
 
         let html = await page.content();
         await page.screenshot({path: cpinfo + `${corp0}.png`, fullPage: true});
 
-        let fhtml = cpinfo + `${corp0}.html`;
-        let jctxt = cpinfo + `${corp0}_jc.txt`;
         fs.writeFileSync(fhtml, html, function (err) {if (err) throw err;});
 
         // jobs count
