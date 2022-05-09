@@ -97,6 +97,15 @@ sase
 | akamai  | get_1page_akamai_13.js |
 | netskope  | get_1page_netskope.com_05.js |
 
+
+ess
+
+| Corp   |    Script |
+|----------| ------:|
+| paloaltonetworks  | get_1page_paloaltonetworks_18.js |
+| unit42            | get_1page_unit42.panetworks_19   |
+
+
 gui dev
 
 | Corp   |    Script |

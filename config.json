@@ -30,10 +30,12 @@
         { "akamai"          : "yes",    "linkedin": "akamai-technologies"},
         { "netskope"        : "yes",    "linkedin": "netskope"},
         { "symantec"        : "no",     "linkedin": "symantec"},
-        { "awake"           : "no",     "linkedin": "awake"},
+        { "awake"           : "no",     "linkedin": "awake"}
     ],
 
     "ess": [
+        { "paloaltonetworks": "yes", "linkedin": "palo-alto-networks"},
+        { "unit42"          : "yes", "linkedin": "palo-alto-networks"},
         { "fireeye.com-cti" : "no" },
         { "mcafee"          : "no",  "linkedin": "cybereason"},
         { "symantec"        : "no",  "linkedin": "symantec"},
@@ -42,11 +44,11 @@
         { "ibm"             : "no",  "linkedin": "ibm"},
         { "verizon"         : "no",  "linkedin": "verizon"},
         { "att"             : "no",  "linkedin": "att"},
-        { "trendmiro"       : "no",  "linkedin": "trend-micro"},
+        { "trendmiro"       : "no",  "linkedin": "trend-micro"}
     ],
 
     "cti": [
-        { "threatpost"      : "no",  "linkedin": "cybereason"},
+        { "threatpost"      : "no",  "linkedin": "cybereason"}
     ],
 
     "web tech": [
