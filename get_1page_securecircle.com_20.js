@@ -353,9 +353,12 @@ async function save_blog_content(url, file){
             imagename = imagename.replace('*', 'A');
             process.stdout.write(`*`);
         }
-        if(imagename.match(/(%20|%26|’|“|”)/)) {
+        if(imagename.match(/(%20|%25|%26|’|“|”)/)) {
             filelocal = filelocal.replaceAll(/%20/g, 'B');
             imagename = imagename.replaceAll(/%20/g, 'B');
+
+            filelocal = filelocal.replaceAll(/%25/g, 'B');
+            imagename = imagename.replaceAll(/%25/g, 'B');
             
             filelocal = filelocal.replaceAll(/%26/g, 'B');
             imagename = imagename.replaceAll(/%26/g, 'B');
