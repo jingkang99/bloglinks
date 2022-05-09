@@ -82,6 +82,7 @@ zero trust
 | doubleoctopus | get_npage_doubleoctopus_15.js |
 | delinea       | get_npage_delinea_16.js |
 | gurucul       | get_1page_gurucul_17.js |
+| securecircle  | get_1page_securecircle.com_20.js |
 
 xdr
 
