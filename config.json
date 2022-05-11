@@ -18,10 +18,11 @@
 
     "xdr": [
         { "mandiant"        : "yes",    "linkedin": "mandiant"},
-        { "corelight"       : "yes",    "linkedin": "corelight"},
+        { "corelight"       : "yes",    "linkedin": "corelight"}
+        { "sentinelone"     : "yes",    "linkedin": "sentinelone"},
+        { "sentinelone/labs": "yes",    "linkedin": "sentinelone"},
         { "fireeye"         : "no",     "linkedin": "cybereason"},
         { "crowdstrike"     : "no",     "linkedin": "netskope"},
-        { "sentinelone"     : "no",     "linkedin": "sentinelone"},
         { "cybereason"      : "no",     "linkedin": "cybereason"},
         { "ariva"           : "no",     "linkedin": "ariva"},
         { "bitdefender"     : "no",     "linkedin": "bitdefender"}

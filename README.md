@@ -90,6 +90,8 @@ xdr
 |----------| ------:|
 | mandiant  | get_npage_mandiant.com_08.js |
 | corelight | get_1page_corelight_14.js |
+| corelight | get_1page_corelight_14.js |
+| corelight | get_1page_corelight_14.js |
 
 sase
 
