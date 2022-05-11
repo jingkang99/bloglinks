@@ -21,9 +21,9 @@
         { "corelight"       : "yes",    "linkedin": "corelight"}
         { "sentinelone"     : "yes",    "linkedin": "sentinelone"},
         { "sentinelone/labs": "yes",    "linkedin": "sentinelone"},
+        { "cybereason"      : "yes",    "linkedin": "cybereason"},
         { "fireeye"         : "no",     "linkedin": "cybereason"},
         { "crowdstrike"     : "no",     "linkedin": "netskope"},
-        { "cybereason"      : "no",     "linkedin": "cybereason"},
         { "ariva"           : "no",     "linkedin": "ariva"},
         { "bitdefender"     : "no",     "linkedin": "bitdefender"}
     ],

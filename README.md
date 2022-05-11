@@ -90,8 +90,9 @@ xdr
 |----------| ------:|
 | mandiant  | get_npage_mandiant.com_08.js |
 | corelight | get_1page_corelight_14.js |
-| corelight | get_1page_corelight_14.js |
-| corelight | get_1page_corelight_14.js |
+| sentinelone | get_npage_sentinelone_21.js |
+| sentinelone.lab | get_npage_lab.sentinelone_22.js |
+| cybereason  | get_1page_cybereason_23.js |
 
 sase
 
