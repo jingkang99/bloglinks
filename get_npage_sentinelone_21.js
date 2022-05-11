@@ -883,8 +883,9 @@ function scan_blog_array(strsearch){
             if(obj.title.match(regex) ) 
                 console.log('find: %s %s', String(i).padEnd(3), obj.blink.green), j++;
         }else{
-            if(! bhmap.has(key)) console.log('miss: %i %s', i, obj.blink.red);
-            if(  bkset.has(key)) console.log('dupl: %i %s', i, obj.blink.yellow);
+            if(! bhmap.has(key)) console.log('miss: %s %s', String(i).padEnd(3), obj.blink.red);
+            if(  bkset.has(key)) console.log('dupl: %s %s', String(i).padEnd(3), obj.blink.yellow);
+
         }
         bkset.add(key);
     }
