@@ -278,7 +278,7 @@ async function save_blog_content(url, file){
     }
     let btags = tagtt.join(',');
 
-    if( bodym.match('MMM') ){
+    if( bodym.match('MMMKJKJ') ){
         btags = '';  // tags in attr;  doubleoctopus
         let cats = $('.status-publish').attr('class').split(' ');
         for(let i=0; i < cats.length; i++){
