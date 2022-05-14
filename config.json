@@ -18,9 +18,9 @@
 
     "xdr": [
         { "mandiant"        : "yes",    "linkedin": "mandiant"},
-        { "corelight"       : "yes",    "linkedin": "corelight"}
+        { "corelight"       : "yes",    "linkedin": "corelight"},
         { "sentinelone"     : "yes",    "linkedin": "sentinelone"},
-        { "sentinelone/labs": "yes",    "linkedin": "sentinelone"},
+        { "labs.sentinelone": "yes",    "linkedin": "sentinelone"},
         { "cybereason"      : "yes",    "linkedin": "cybereason"},
         { "fireeye"         : "no",     "linkedin": "cybereason"},
         { "crowdstrike"     : "no",     "linkedin": "netskope"},
@@ -36,8 +36,8 @@
     ],
 
     "ess": [
-        { "paloaltonetworks": "yes", "linkedin": "palo-alto-networks"},
-        { "unit42"          : "yes", "linkedin": "palo-alto-networks"},
+        { "paloaltonetworks" : "yes", "linkedin": "palo-alto-networks"},
+        { "unit42.panetworks": "yes", "linkedin": "palo-alto-networks"},
         { "fireeye.com-cti" : "no" },
         { "mcafee"          : "no",  "linkedin": "cybereason"},
         { "symantec"        : "no",  "linkedin": "symantec"},

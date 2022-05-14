@@ -196,6 +196,7 @@ function getSize(path){
 }
 
 function convertBytes(bytes) {
+    //return '0 KB';
     const sizes = ["Bytes", "KB", "MB", "GB", "TB"]
 
     if (bytes == 0) return "n/a";
@@ -247,10 +248,13 @@ for(var key in blogsites){
         let obj = JSON.parse('{"cmdjs" : "", "foldr" : "", "class" : ""}');
         jslist.forEach( e => {
             if(e.match(st)) obj.cmdjs = e;
+            if(st.match('labs.sentinelone')) obj.cmdjs = 'get_npage_lab.sentinelone_22.js';
         });
 
         fdlist.forEach( e => {
             if(e.match(st)) obj.foldr = e;
+            if(st.match('unit42')) obj.foldr = 'unit42.paloaltonetworks.com';
+            if(st.match('paloaltonetworks')) obj.foldr = 'paloaltonetworks.com';
         });
         obj.class = st;
 
