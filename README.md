@@ -93,6 +93,7 @@ xdr
 | sentinelone | get_npage_sentinelone_21.js |
 | sentinelone.lab | get_npage_lab.sentinelone_22.js |
 | cybereason  | get_1page_cybereason_23.js |
+| uptycs	  | get_npage_uptycs_24.js |
 
 sase
 
