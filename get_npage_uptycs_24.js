@@ -313,7 +313,9 @@ async function save_blog_content(url, file){
     bodym = bodym.replaceAll(/Continue reading/g, '');
     bodym = bodym.replaceAll(/srcset=".*?"/g, ' ');
     bodym = bodym.replaceAll(/background-image:url\(.*?\);/g, ' ');
+	
 	bodym = bodym.replaceAll(/font-size: 16rem; letter-spacing: 0.25rem;/g, ' ');
+	bodym = bodym.replaceAll(/font-size: 16rem;/g, ' ');
 
     if(url.match(TRACE)) console.log('body->', bodym.length);
 
