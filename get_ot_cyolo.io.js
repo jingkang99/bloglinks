@@ -21,14 +21,14 @@ const REGULAR = ".blog-loop";
 const FEATURE = ".NONO";
 const BODYBLG = ".elementor-column.elementor-col-50.elementor-top-column.elementor-element";
 
-const ua_chrm = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36';
+const ua_chrm = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.0.0 Safari/537.36';
 
 var ONEPAGE = false;
 var CHCKNEW = false;
 
 if (! process.env.ARCROOT) {
     console.log('warning: export ARCROOT first, use ../arcroot as default');
-    process.env.ARCROOT = '../arcroot';
+    process.env.ARCROOT = '../blog_recd';
 }
 
 // create blog data folder
