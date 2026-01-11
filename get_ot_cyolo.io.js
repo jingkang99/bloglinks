@@ -1,5 +1,3 @@
-// export ARCROOT='../arcroot'
-
 'use strict';
 
 const fs = require('fs');
@@ -17,11 +15,11 @@ const isDebug = argv.includes('inspect');
 const isVerbs = argv.includes('verbose');
 
 const urlroot = 'https://cyolo.io/blog/';
-const REGULAR = ".blog-loop";
-const FEATURE = ".NONO";
-const BODYBLG = ".elementor-column.elementor-col-50.elementor-top-column.elementor-element";
+const REGULAR = "a.group.h-full";
+const FEATURE = ".col-span-full";
+const BODYBLG = ".rich-text.smaller-headings";
 
-const ua_chrm = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.0.0 Safari/537.36';
+const ua_chrm = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36';
 
 var ONEPAGE = false;
 var CHCKNEW = false;
@@ -52,28 +50,39 @@ function parse_blog_url($, section){
     const posts = $(section);
     let blogarr = [];
 
-    //console.log($( "li[itemprop='datePublished']").text() );
-
     for (let i = 0; i < posts.length; i++) {
-        let postTitleWrapper = $(posts[i]).find(".elementor-heading-title ")[0],
+        // blog title
+		let postTitleWrapper = $(posts[i]).find(".h-2xl.mt-4")[0],
             postTitle = $(postTitleWrapper).text();
-            postTitle = postTitle.replace(/\n/g, '');
 
+		if(postTitle.length == 0){	// Featured
+			postTitleWrapper = $(posts[i]).find(".h3.mt-4.leading-snug")[0];
+            postTitle = $(postTitleWrapper).text();
+		}
+
+		postTitle = postTitle.replace(/\n/g, '');
+		postTitle = postTitle.replace(/\"/g, '');
         let title = postTitle.replace(/ /g, '_');
         title = title.replace(/[\W]+/g, '');
-        
+
         if(title.length < 10) continue;
 
-        let postLinkWrapper = $(posts[i]).find("a")[0],
+		// url link
+		let postLink = $(posts[i]).attr("href");
+
+		if(postLink === undefined){	// Featured
+			let postLinkWrapper = $(posts[i]).find("a")[0];
             postLink = $(postLinkWrapper).attr("href");
+		}
+
         if(! postLink.match('https') ) postLink = www[0] + postLink;
+        postLink = postLink.replace(/\/\//g, '/');
 
         let author = bserver, postDate = 'January 5, 2000', postDesc=title;
-
         let authorWrapper = $(posts[i]).find(".author-post")[0];
         if(authorWrapper != null ) author = $(authorWrapper).text();
 
-        let dateWrapper = postDate = $(posts[i]).find(".elementor-icon-list-text")[1];     
+        let dateWrapper = postDate = $(posts[i]).find(".font-mont.text-sm")[1];     
         postDate = $(dateWrapper).text().trim();
         
         if(! postDate.match(/\w+/) ) postDate = 'January 20, 2000',
@@ -82,11 +91,16 @@ function parse_blog_url($, section){
         postDate = postDate.replace("st", '');
         postDate = postDate.replace("nd", '');
         postDate = postDate.replace("rd", '');
-        
+
         if(! postDate.match(',')){
             let datetemp = postDate.split(" ");
             postDate = datetemp[0] + ' ' + datetemp[1] + ', ' + datetemp[2];
         }
+
+		// brief
+		let postDescWrapper = $(posts[i]).find(".line-clamp-3")[0];
+		postDesc = $(postDescWrapper).text();
+        postDesc = postDesc.replace(/[^a-zA-Z0-9 \.-]/g, '');
 
         let postID = "post-" + crypto.createHash('md5').update(author+title, 'utf8').digest('hex').slice(0,6);
 
@@ -103,14 +117,15 @@ function parse_blog_url($, section){
         }
 
         const item_json = blog_attr(postID, postTitle, author, postLink, postDate, blogFile, postDesc);
-        // console.log(item_json); process.exit(1);
+        //console.log(item_json); process.exit(1);
         blogarr.push(item_json);
     }
     return blogarr;
 }
 
 async function find_blog_links(purl){
-    let num = purl.match(/http[s]:\/\/.+\/(\d+)\//);
+	// https://cyolo.io/blog/?entries-grid=7
+    let num = purl.match(/http[s]:\/\/.+=(\d+)/);
     let page = pagroot + '/p' + int3(num[1]) + '.html'; 
 
     let firstp = false;
@@ -134,6 +149,7 @@ async function find_blog_links(purl){
         if (fs.existsSync(page) && ! firstp ){   // always read the 1st page
             html = fs.readFileSync(page).toString();
         }else{
+			console.log(purl); 
             let resp = await axios.get(purl);
             await save_to_file(page, resp.data);
             html = resp.data;
@@ -145,13 +161,13 @@ async function find_blog_links(purl){
     // parse REGULAR posts
     var REGULAR_posts = parse_blog_url($, REGULAR);
 
-    if (firstp){    // parse FEATUREd posts in first page        
+    //if (firstp){    // parse FEATUREd posts in all pages
         var FEATURE_posts=[];
         FEATURE_posts = parse_blog_url($, FEATURE);
         REGULAR_posts = [...FEATURE_posts, ...REGULAR_posts];
-    }
+    //}
 
-    console.log("blog found: %d", REGULAR_posts.length);
+    //console.log("blog found: %d in page %d" , REGULAR_posts.length, int3(num[1]));
     return REGULAR_posts;
 }
 
@@ -174,36 +190,23 @@ async function save_blog_content(url, file){
     var $ = cheerio.load(resp.data)
 
     //remove product/share/links to keep layout clean
-    $(".share").remove();
-    $(".blog-plug").remove();
-    $(".sharedaddy").remove();
-    $(".hidden-lg-up").remove();
-    $(".prevnextlinks").remove();
+	$(".flex.gap-4.items-center").remove();		 // author
+	$(".lighter-dark-grad.rounded-xl").remove(); // 
+	$(".flex.flex-wrap.items-center").remove();	 // blog header
 
-    $(".sidebar").remove();
-    $(".blogNavbar").remove();
-    $(".article__footer").remove();
-    
-    $(".related-wrapper").remove();  // p81
-    $(".elementor-grid").remove();               // cyolo
-    $(".elementor-author-box__avatar").remove(); // cyolo
-    $(".elementor-post-info").remove();          // cyolo
+    let title = $("title").text().replace(' | Cyolo', '-JK CTI');
 
-    let title = $("title").text().replace('- Cyolo', '-JK CTI');
+    let bodyo = $(BODYBLG);
+    let bodym = $(BODYBLG).html();		  // locate blog main body
+	let btitl = $('.container.my-12');	  // title date info
 
-    let bodyo = $(BODYBLG);   // cyolo no clear way to identify main blog
-    let bodym = $(bodyo[0]).html() // locate blog main body
+	btitl.append("<br>");
+	btitl.append(bodym );
+	bodym = btitl.html();
 
-    let topic = $(".title-page").text();
-    if(urlroot.match('perimeter81')) bodym = `<br><h1> ${topic} </h1><br>\n` + bodym;
+    bodym = bodym.replaceAll(/text-white/g, '');
 
-    if(bodym == null) bodym = $(".blog-template-grid-expand").html(); // twingate
-
-    // to load img directly
-    bodym = bodym.replaceAll(/srcset=".*?"/g, ' ');
-    bodym = bodym.replaceAll(/background-image:url\(.*?\);/g, ' ');
-
-    $ = cheerio.load(bodym); // only blog main part
+    $ = cheerio.load(bodym); // only main part of blog
 
     // parse tags
     let taobj = $('.elementor-post-info__terms-list').find(".elementor-post-info__terms-list-item");
@@ -222,7 +225,6 @@ async function save_blog_content(url, file){
 
 <link rel='stylesheet' id='bootstrap4-css'  href='../data/bootstrap.min.css' type='text/css' media='all' />
 <link rel='stylesheet' id='mediumish-style-css'  href='../data/style.css' type='text/css' media='all' />
-<link rel="stylesheet" type="text/css" id="wp-custom-css" href="../data/custom-css" />
 
 </head>
 <body class="post-template-default single single-post single-format-standard">
@@ -249,7 +251,34 @@ async function save_blog_content(url, file){
         if (fs.existsSync(filelocal)) continue;     // skip if already downloaded
 
         if(! imgurl.match(/http/)) imgurl = www[0] + imgurl;       
-        const encodedurl = encodeURI(imgurl);
+        let encodedurl = encodeURI(imgurl);
+
+		//figure img
+		let fsrc = imgsrc;	//$('a figure img').attr('src');
+		if( fsrc.match(/asset\/[a-zA-Z0-9_]{30,}/) ){
+			try {
+				//encodedurl = $('a figure').parent().attr('href');
+				encodedurl = $(gg[i]).parent().parent().attr('href');
+
+				fileimage = encodedurl.split('/').slice(-1)[0].split('?')[0];
+				fileimage = crypto.createHash('md5').update(encodedurl, 'utf8').digest('hex').slice(0,16) + '.png';
+
+				filelocal = datroot + '/' + fileimage;
+
+				bodym = bodym.replace(encodedurl, '../data/' + fileimage);
+				
+				const matchResult = fsrc.match(/\/img\/asset\/([a-zA-Z0-9_]{30,})\//);
+				const regex1 = 'src=".+' + matchResult[1] + '.+?"';
+				var regexVar = new RegExp(regex1);
+				bodym = bodym.replace(regexVar, 'src="../data/' + fileimage + '"');
+				
+				console.log(imgsrc+"\n");
+				//console.log(encodedurl); 
+				//console.log(regex1);
+			} catch (err) { 
+				console.log("  figure img");
+			}	
+		}
 
         try {
             const response = await axios({
@@ -257,25 +286,22 @@ async function save_blog_content(url, file){
                 url: encodedurl,
                 responseType: 'stream',
             });
-            
+
             const w = response.data.pipe(fs.createWriteStream(filelocal));            
             w.on('finish', () => {
                 process.stdout.write(`.`);
             });
         } catch (err) { 
-                console.log("  unescaped char: %s", imgurl);
-                
-                // url has special char that not handled by axios
-                // inherit will use the stdio of the parent process
-                execcmd('wget', [imgurl, '-q', '-O', filelocal], {stdio:'inherit'});
-
-                continue;
+			console.log("  cannot get: %s", encodedurl);
+			//execcmd('wget', [encodedurl, '-q', '-O', filelocal], {stdio:'inherit'});
+			//continue;
         }
     }
     console.log("");
 
     // only keep the blog main body, saved space a lot 
     bodym = bhead_s + bodym + bhead_e;
+	
     await save_to_file(file, bodym);
 
     let stopt = process.hrtime(stime);
@@ -291,7 +317,7 @@ async function save_blog_content(url, file){
 async function get_all_blog_url2array(urlp, firstpage_only=false, finalpage=0) {
     let stime = process.hrtime();
 
-    !fs.existsSync(prjroot) && fs.mkdirSync(prjroot);
+    !fs.existsSync(prjroot) && fs.mkdirSync(prjroot, { recursive: true });
     !fs.existsSync(pagroot) && fs.mkdirSync(pagroot);
     !fs.existsSync(datroot) && fs.mkdirSync(datroot);
     !fs.existsSync(blgroot) && fs.mkdirSync(blgroot);
@@ -328,7 +354,7 @@ async function get_all_blog_url2array(urlp, firstpage_only=false, finalpage=0) {
 
     // find all posts in each blog page
     for(let i = 1; i <= lastpage; i++) {
-        let page = urlroot +'page/' + i + '/';
+        let page = urlroot + '?entries-grid=' + i;
         if( ONEPAGE ) page = urlroot + '/1/';
 
         let pburls = await find_blog_links(page);
@@ -351,15 +377,15 @@ async function get_all_blog_url2array(urlp, firstpage_only=false, finalpage=0) {
         else{   // full from page 1 to last
             blogs = [...blogs, ...pburls];
         }
-        
+
         // save blog array for debug
         fs.writeFile(blogarry, JSON.stringify(blogs), function (err) { if (err) throw err; });
 
-        if(isDebug) console.log('blogs in page %d %d %s', i, blogs.length, page);
+        if(isDebug) console.log("blogs in page %s %s %s", i.toString().padStart(2, ' ').cyan, blogs.length.toString().padStart(3, ' ').cyan, page);
 
         if(firstpage_only) break;
     }
-    
+
     let stopt = process.hrtime(stime);
     console.log(`\nblog array: ${(stopt[0] * 1e9 + stopt[1])/1e9} seconds`.yellow);
 }
@@ -590,7 +616,7 @@ const arg = process.argv.slice(2);
 switch (arg[0]) {
     case '--save-urls':
         console.log('== save-urls ==');
-        get_all_blog_url2array(urlroot, false, 9);
+        get_all_blog_url2array(urlroot, false, 11);
         break;
     case '--check-new':
         console.log('== check-new ==');
