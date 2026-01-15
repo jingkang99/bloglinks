@@ -191,8 +191,10 @@ async function save_blog_content(url, file){
 
     //remove product/share/links to keep layout clean
 	$(".flex.gap-4.items-center").remove();		 // author
-	$(".lighter-dark-grad.rounded-xl").remove(); // 
+	$(".lighter-dark-grad.rounded-xl").remove(); //
+	$(".btn-group.flex.flex-wrap").remove(); 	 // 
 	$(".flex.flex-wrap.items-center").remove();	 // blog header
+	
 
     let title = $("title").text().replace(' | Cyolo', '-JK CTI');
 
@@ -223,8 +225,8 @@ async function save_blog_content(url, file){
 <meta name="JK" content="SZ Threat Intel" />
 <title>${title}</title>
 
-<link rel='stylesheet' id='bootstrap4-css'  href='../data/bootstrap.min.css' type='text/css' media='all' />
-<link rel='stylesheet' id='mediumish-style-css'  href='../data/style.css' type='text/css' media='all' />
+<link rel='stylesheet' id='bootstrap4-css' href='../data/bootstrap.min.css'  type='text/css' media='all' />
+<link rel='stylesheet' id='mediumish-style-css' href='../data/style.min.css' type='text/css' media='all' />
 
 </head>
 <body class="post-template-default single single-post single-format-standard">
@@ -276,7 +278,7 @@ async function save_blog_content(url, file){
 				//console.log(encodedurl); 
 				//console.log(regex1);
 			} catch (err) { 
-				console.log("  figure img");
+				console.log("  warn: figure img");
 			}	
 		}
 
@@ -292,7 +294,7 @@ async function save_blog_content(url, file){
                 process.stdout.write(`.`);
             });
         } catch (err) { 
-			console.log("  cannot get: %s", encodedurl);
+			console.log("  error: %s", encodedurl);
 			//execcmd('wget', [encodedurl, '-q', '-O', filelocal], {stdio:'inherit'});
 			//continue;
         }
@@ -300,8 +302,8 @@ async function save_blog_content(url, file){
     console.log("");
 
     // only keep the blog main body, saved space a lot 
-    bodym = bhead_s + bodym + bhead_e;
-	
+    bodym = bhead_s + "<br>" + bodym + bhead_e;
+
     await save_to_file(file, bodym);
 
     let stopt = process.hrtime(stime);
@@ -609,7 +611,51 @@ function dateFormat (date, fstr, utc) {
     });
 }
 
+function scan_blog_array(strsearch){
+    if (! fs.existsSync(blogarry) || !fs.existsSync(bloghash))
+        process.exit();
+
+    let buffe = fs.readFileSync(blogarry).toString();
+    let blogs = JSON.parse(buffe);
+        buffe = fs.readFileSync(bloghash).toString();
+    let bhmap = new hashmap(JSON.parse(buffe));
+    let bkset = new Set();
+
+    console.log("orginal: %s, indexed: %s\n".cyan, blogs.length, bhmap.size);
+
+    let j = 0, regex = new RegExp(`${strsearch}`, 'i');
+
+    for(var i = 0;  i < blogs.length; i++) {
+        let obj = JSON.parse(blogs[i]);
+        let key = obj.authr + ' ' + obj.bdesc; // hash key
+
+        if(strsearch !=  null){
+            if(obj.title.match(regex) ) 
+                console.log('find: %s %s', String(i).padEnd(3), obj.blink.green), j++;
+        }else{
+            if(! bhmap.has(key)) console.log('miss: %s %s', String(i).padEnd(3), obj.blink.red);
+            if(  bkset.has(key)) console.log('dupl: %s %s', String(i).padEnd(3), obj.blink.yellow);
+        }
+        bkset.add(key);
+    }
+    if(strsearch !=  null) console.log('find total', j);
+}
+
 // --- start ---
+!fs.existsSync(prjroot) && fs.mkdirSync(prjroot);
+!fs.existsSync(pagroot) && fs.mkdirSync(pagroot);
+!fs.existsSync(datroot) && fs.mkdirSync(datroot);
+!fs.existsSync(blgroot) && fs.mkdirSync(blgroot);
+
+let css = ['bootstrap.min.css', 'style.min.css'];
+css.forEach( e => {
+    if (fs.existsSync(datroot + '/' + e)) return;  
+    fs.copyFile("node_modules/" + e, datroot + '/' + e,
+        fs.constants.COPYFILE_EXCL, (err) => {
+            if (err) { console.log("error found:", err); }
+        }
+    );
+});
 
 const arg = process.argv.slice(2);
 
@@ -635,14 +681,25 @@ switch (arg[0]) {
             process_blog_cont2file();
         }
         break;
+    case '--scan':
+        console.log('== check blog entry ==');
+
+        let strsearch;
+        if(arg.length > 1){
+            strsearch = arg[1];
+            console.log('search :', strsearch.yellow);
+
+        }
+        scan_blog_array(strsearch);
+        break;
     case '--help':
     default:
         let ndjs = path.basename(__filename);
         console.log(`\nUsage:
 node --inspect ${ndjs} --save-urls
 node --inspect ${ndjs} --save-blog NUM
-node --inspect ${ndjs} --check-new`);
-        
+node --inspect ${ndjs} --check-new
+node --inspect ${ndjs} --scan`);        
 }
 
 // too many same tags used, hard to fina an unique ID, bad for bot
