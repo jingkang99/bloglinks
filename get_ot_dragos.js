@@ -248,11 +248,6 @@ async function save_blog_content(url, file){
 	}
     if(url.match(TRACE)) console.log('resp->', data.length);
 
-    // property="article:published_time" content="2012-10-10T06:35:29+00:00" 
-    let jsdate, bdate;
-    let reg = data.match(/published_time" content="(\d\d\d\d-\d\d-\d\d)T/);
-    if( reg != null && reg.length > 0) jsdate = reg[1];
-
     var $ = cheerio.load(data);
     remove_html_sections($);
 
