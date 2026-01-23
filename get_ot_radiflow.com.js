@@ -24,12 +24,12 @@ const IDXAUTH = ".MMM";
 const IDXLINK = "a";
 
 const IDXDATE = ".resorce-content span";
-const BDYDATE = ".article__title h6";
+const BDYDATE = ".row.resource-inner-top.flex-col-center span";
 
-const BODYBLG = ".article__content.richtext-entry";
+const BODYBLG = ".two-third-div";
 
-const BDYTITL = ".article__title h1";
-const DATAUTH = ".article__title h6";
+const BDYTITL = ".medium-hero.resources h1";
+const DATAUTH = ".row.resource-inner-top.flex-col-center span";
 
 const TITLEYN = true; // parse title in blog body
 
@@ -218,21 +218,14 @@ function save_blog_content(url, file){
 	}
 
     let jsdate, bdate;
-    let reg = data.match(/datePublished":"(\d\d\d\d-\d\d-\d\d)T/);
+    let reg = data.match(/published_time" content="(\d\d\d\d-\d\d-\d\d)T/);
     if( reg != null && reg.length > 0) jsdate = reg[1];
 
     var $ = cheerio.load(data);
-	$("h3 a").remove();
-	$(".relative.py-4").remove();
+	$(".third-div").remove();
+	$(".recent-posts.bg-white").remove();
 
-	data = $.html();
-	let more1 = '<p><a href="/request-a-demo"><em><u>Request a demo</u></em></a><em> and see how Claroty can protect your organization.</em></p>';
-	let more2 = 'Learn more about the platform by .&nbsp;';
-	data = data.replace(more1, '');
-	data = data.replace(more2, '<br>');
-	$ = cheerio.load(data);
-
-    let title = $("title").text().replace(' | Claroty', '-JK CTI');
+    let title = $("title").text().replace(' | Radiflow', '-JK CTI');
 
     let bodyo = $(BODYBLG);
     let bodym = $(BODYBLG).html(); // locate blog main body
@@ -254,6 +247,8 @@ function save_blog_content(url, file){
     // if title/topic not inclued in bodym
     let topic = $(BDYTITL).text().trim();
 	let dateauth = $(DATAUTH).html(); // auth section
+
+	//console.log(jsdate.blue, topic.green, dateauth.inverse);process.exit();
 
 	if(dateauth != null ) {
 		dateauth = dateauth.replace("by ", "");
@@ -510,7 +505,7 @@ function process_blog_cont2file( stopnum = 10000 ){
         bhmap = new hashmap(JSON.parse(buffe));
     }else{
         bhmap = new hashmap();
-    }
+    }1
     
     let bfilelist = fs.readdirSync(blgroot).join(' ');
 
